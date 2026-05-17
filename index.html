@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=beb511d6">
+<link rel="manifest" href="./manifest.webmanifest?v=d4969df9">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=beb511d6">
+<link rel="apple-touch-icon" href="./icon.svg?v=d4969df9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -44,7 +44,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=beb511d6");
+    background-image: url("./noise.svg?v=d4969df9");
   }
 
   body::after {
@@ -650,9 +650,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="beb511d6">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/62.svg?v=beb511d6">
-  <script src="./cb-badge.js?v=beb511d6" defer></script>
+  <meta name="cb" content="d4969df9">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/20.svg?v=d4969df9">
+  <script src="./cb-badge.js?v=d4969df9" defer></script>
 </head>
 <body class="mode-v1">
   <canvas id="canvas"></canvas>
@@ -827,32 +827,58 @@
     };
     // [min, max, max-step-magnitude] for the per-nudge bounded random walk
     const DRIFT_RANGES = {
-      kappa:   [0,        200,      2.5      ],
-      power:   [1.0,      2.4,      0.04     ],
-      divisor: [100,      2500,     40       ],
-      coeff:   [0.01,     0.3,      0.004    ],
-      tmax:    [50,       600,      15       ],
-      scale:   [30,       180,      4        ],
-      phase:   [-0.00001, 0.00001,  0.0000003],
+      kappa:   [0,        200,      4.5      ],
+      power:   [1.0,      2.4,      0.07     ],
+      divisor: [100,      2500,     70       ],
+      coeff:   [0.01,     0.3,      0.007    ],
+      tmax:    [50,       600,      26       ],
+      scale:   [30,       180,      7        ],
+      phase:   [-0.00001, 0.00001,  0.0000005],
     };
+    const COMPOUND_CHANCE = 0.15;       // 15% of cycles nudge two knobs at once
 
     let driftKey = null;
     let driftStartVal = 0, driftTargetVal = 0;
+    let drift2Key = null;
+    let drift2StartVal = 0, drift2TargetVal = 0;
     let driftElapsed = 0, driftInterval = 0;
     let driftSyncTimer = 0;
-    let cycleElapsed = 0, cycleDuration = 0;   // V3 regrowth cycle
+    // V3 life cycle: growing → steady → unwinding → growing
+    let cyclePhase = 'growing';
+    let steadyElapsed = 0, steadyDuration = 0;
 
     const rand = (a, b) => a + Math.random() * (b - a);
     const easeInOutQuad = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
 
-    function pickNextDrift() {
-      // Choose one parameter and nudge it slightly within its bounds.
-      driftKey = DRIFT_KEYS[Math.floor(Math.random() * DRIFT_KEYS.length)];
-      driftStartVal = params[driftKey];
-      const [lo, hi, maxStep] = DRIFT_RANGES[driftKey];
+    function randomKnobNudge(key) {
+      const [lo, hi, maxStep] = DRIFT_RANGES[key];
+      const start = params[key];
       const delta = (Math.random() - 0.5) * 2 * maxStep;
-      driftTargetVal = Math.max(lo, Math.min(hi, driftStartVal + delta));
-      driftInterval = rand(15, 40);   // very patient
+      return { start, target: Math.max(lo, Math.min(hi, start + delta)) };
+    }
+
+    function pickNextDrift() {
+      driftKey = DRIFT_KEYS[Math.floor(Math.random() * DRIFT_KEYS.length)];
+      const a = randomKnobNudge(driftKey);
+      driftStartVal = a.start;
+      driftTargetVal = a.target;
+
+      // Sometimes nudge a second knob with a quieter delta (compound move)
+      if (Math.random() < COMPOUND_CHANCE) {
+        let k2;
+        do { k2 = DRIFT_KEYS[Math.floor(Math.random() * DRIFT_KEYS.length)]; }
+        while (k2 === driftKey);
+        const b = randomKnobNudge(k2);
+        // Halve the secondary delta so the main knob still leads
+        b.target = b.start + (b.target - b.start) * 0.5;
+        drift2Key = k2;
+        drift2StartVal = b.start;
+        drift2TargetVal = b.target;
+      } else {
+        drift2Key = null;
+      }
+
+      driftInterval = rand(10, 30);
       driftElapsed = 0;
     }
 
@@ -869,11 +895,13 @@
         growth:  5.0,
       });
       driftKey = null;
+      drift2Key = null;
       pickNextDrift();
       driftSyncTimer = 0;
-      growthT = 0;                  // start from a single dot
-      cycleElapsed = 0;
-      cycleDuration = rand(60, 180); // rebirth every 1–3 minutes
+      growthT = 0;                       // start from a single dot
+      cyclePhase = 'growing';
+      steadyElapsed = 0;
+      steadyDuration = rand(50, 150);    // life in fully-grown form
       syncReadouts();
     }
 
@@ -882,20 +910,39 @@
       const t = Math.min(1, driftElapsed / driftInterval);
       const e = easeInOutQuad(t);
       params[driftKey] = driftStartVal + (driftTargetVal - driftStartVal) * e;
-      if (t >= 1) pickNextDrift();
-
-      // Periodic rebirth: reset to a single dot, params keep drifting
-      cycleElapsed += dt;
-      if (cycleElapsed >= cycleDuration) {
-        growthT = 0;
-        cycleElapsed = 0;
-        cycleDuration = rand(60, 180);
+      if (drift2Key) {
+        params[drift2Key] = drift2StartVal + (drift2TargetVal - drift2StartVal) * e;
       }
+      if (t >= 1) pickNextDrift();
 
       driftSyncTimer += dt;
       if (driftSyncTimer > 0.15) {
         driftSyncTimer = 0;
         syncReadouts();
+      }
+    }
+
+    function cycleTick(dt) {
+      // V3 life cycle. Growth/unwind rate keyed off params.growth (seconds).
+      const tmaxNow = params.tmax;
+      const rate = tmaxNow / Math.max(0.5, params.growth);
+      if (cyclePhase === 'growing') {
+        growthT = Math.min(tmaxNow, growthT + rate * dt);
+        if (growthT >= tmaxNow) {
+          cyclePhase = 'steady';
+          steadyElapsed = 0;
+        }
+      } else if (cyclePhase === 'steady') {
+        // If tmax drifted up while steady, organically resume growing
+        if (growthT < tmaxNow) growthT = Math.min(tmaxNow, growthT + rate * dt);
+        steadyElapsed += dt;
+        if (steadyElapsed >= steadyDuration) cyclePhase = 'unwinding';
+      } else { // 'unwinding'
+        growthT = Math.max(0, growthT - rate * dt);
+        if (growthT <= 0) {
+          cyclePhase = 'growing';
+          steadyDuration = rand(50, 150);
+        }
       }
     }
 
@@ -993,14 +1040,21 @@
 
       const { kappa, power, divisor, coeff, tmax, scale } = params;
 
-      // V2 + V3: advance growth toward tmax over params.growth seconds
+      // V2: grow once toward tmax.  V3: full grow/steady/unwind cycle.
       const usesGrowth = (mode === 'v2' || mode === 'v3');
-      if (usesGrowth && !paused && growthT < tmax) {
-        const growRate = tmax / Math.max(0.1, params.growth);
-        growthT = Math.min(tmax, growthT + growRate * dtFrame);
+      if (!paused) {
+        if (mode === 'v2' && growthT < tmax) {
+          const growRate = tmax / Math.max(0.1, params.growth);
+          growthT = Math.min(tmax, growthT + growRate * dtFrame);
+        } else if (mode === 'v3') {
+          cycleTick(dtFrame);
+        }
       }
       const tCap = usesGrowth ? growthT : tmax;
-      const isGrowing = usesGrowth && (growthT < tmax);
+      // Tip glow during anything that isn't "steady at full extent"
+      const isGrowing =
+        (mode === 'v2' && growthT < tmax) ||
+        (mode === 'v3' && cyclePhase !== 'steady');
 
       // adaptive sampling — keep roughly 5–6k points regardless of tmax
       const targetSamples = 5500;
@@ -1067,8 +1121,12 @@
       phaseEl.textContent = phase.toFixed(7);
       if (mode === 'v3' && driftKey) {
         const remain = Math.max(0, driftInterval - driftElapsed);
-        const cycleRem = Math.max(0, cycleDuration - cycleElapsed);
-        driftValEl.textContent = `${DRIFT_SYMBOL[driftKey]} ${remain.toFixed(1)}s · ↻${cycleRem.toFixed(0)}s`;
+        let phase;
+        if (cyclePhase === 'growing')        phase = '↗ 芽';
+        else if (cyclePhase === 'steady')    phase = `○ ${Math.max(0, steadyDuration - steadyElapsed).toFixed(0)}s`;
+        else                                  phase = '↙ 還';
+        const compound = drift2Key ? `+${DRIFT_SYMBOL[drift2Key]}` : '';
+        driftValEl.textContent = `${DRIFT_SYMBOL[driftKey]}${compound} ${remain.toFixed(1)}s · ${phase}`;
       }
 
       lastFrameT = tNowFrame;
