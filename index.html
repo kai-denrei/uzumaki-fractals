@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>渦巻 · Uzumaki</title>
+<link rel="manifest" href="./manifest.webmanifest?v=beb511d6">
+<meta name="theme-color" content="#050403">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Uzumaki">
+<link rel="apple-touch-icon" href="./icon.svg?v=beb511d6">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #0a0908;
+    --void:       #050403;
+    --bone:       #f5f0e6;
+    --bone-dim:   rgba(245, 240, 230, 0.55);
+    --bone-faint: rgba(245, 240, 230, 0.18);
+    --bone-trace: rgba(245, 240, 230, 0.08);
+    --cinnabar:   #c1272d;
+    --gold:       #b08d57;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--void);
+    color: var(--bone);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("./noise.svg?v=beb511d6");
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 40;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+  }
+
+  #canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  /* ---------- Top-left mark ---------- */
+  .kanji-mark {
+    position: fixed;
+    top: 2.25rem;
+    left: 2.75rem;
+    font-family: 'Shippori Mincho B1', serif;
+    font-weight: 800;
+    font-size: 4.5rem;
+    color: var(--cinnabar);
+    writing-mode: vertical-rl;
+    letter-spacing: 0.18em;
+    line-height: 1;
+    z-index: 10;
+    user-select: none;
+    text-shadow: 0 0 30px rgba(193,39,45,0.4);
+  }
+
+  .romaji-stack {
+    position: fixed;
+    top: 2.4rem;
+    left: 7.5rem;
+    z-index: 10;
+    user-select: none;
+  }
+
+  .romaji-stack .title {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.1rem;
+    color: var(--bone-dim);
+    letter-spacing: 0.18em;
+    line-height: 1;
+  }
+
+  .romaji-stack .subtitle {
+    margin-top: 0.5rem;
+    font-size: 0.6rem;
+    color: var(--bone-faint);
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+  }
+
+  .romaji-stack .index {
+    margin-top: 1rem;
+    font-size: 0.55rem;
+    color: var(--bone-faint);
+    letter-spacing: 0.3em;
+    border-top: 1px solid var(--bone-faint);
+    padding-top: 0.5rem;
+    width: 9rem;
+  }
+
+  /* ---------- Bottom-left formula ---------- */
+  .formula {
+    position: fixed;
+    bottom: 2rem;
+    left: 2.75rem;
+    z-index: 10;
+    font-size: 0.65rem;
+    color: var(--bone-faint);
+    letter-spacing: 0.18em;
+    line-height: 1.9;
+    max-width: 22rem;
+  }
+  .formula b { color: var(--bone-dim); font-weight: 400; }
+  .formula em { font-style: italic; color: var(--gold); }
+
+  /* ---------- Control panel ---------- */
+  .controls {
+    position: fixed;
+    top: 50%;
+    right: 2.25rem;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 296px;
+    padding: 1.5rem 1.4rem 1.25rem;
+    background: rgba(8, 7, 6, 0.78);
+    backdrop-filter: blur(12px) saturate(1.1);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
+    border: 1px solid var(--bone-faint);
+    border-left: 2px solid var(--cinnabar);
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(245,240,230,0.04);
+  }
+
+  .controls-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--bone-faint);
+  }
+
+  .controls-title .en {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.36em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+  }
+
+  .controls-title .ja {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    color: var(--cinnabar);
+    letter-spacing: 0.15em;
+    font-size: 0.9rem;
+  }
+
+  .slider-group {
+    margin-bottom: 0.95rem;
+  }
+  .slider-group:last-of-type { margin-bottom: 0; }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.4rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+  }
+
+  .slider-label .name { display: flex; gap: 0.55rem; align-items: baseline; }
+  .slider-label .name .sym {
+    font-style: italic;
+    color: var(--bone);
+    font-weight: 500;
+  }
+  .slider-label .name .ja {
+    font-family: 'Shippori Mincho B1', serif;
+    color: var(--gold);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
+  .slider-label .value {
+    color: var(--bone);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, var(--bone-faint), var(--bone-trace));
+    outline: none;
+    cursor: ew-resize;
+    border-radius: 0;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 2px;
+    height: 14px;
+    background: var(--bone);
+    cursor: ew-resize;
+    border-radius: 0;
+    box-shadow: 0 0 12px rgba(245,240,230,0.6);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  input[type="range"]:hover::-webkit-slider-thumb,
+  input[type="range"]:active::-webkit-slider-thumb {
+    background: var(--cinnabar);
+    box-shadow: 0 0 16px rgba(193,39,45,0.8);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 2px;
+    height: 14px;
+    background: var(--bone);
+    cursor: ew-resize;
+    border: none;
+    border-radius: 0;
+  }
+
+  .footer-actions {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--bone-faint);
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  button {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--bone-faint);
+    color: var(--bone-dim);
+    padding: 0.55rem 0.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button:hover {
+    border-color: var(--cinnabar);
+    color: var(--cinnabar);
+    background: rgba(193,39,45,0.06);
+  }
+  button.primary {
+    background: var(--cinnabar);
+    color: var(--bone);
+    border-color: var(--cinnabar);
+  }
+  button.primary:hover {
+    background: rgba(193,39,45,0.85);
+    color: var(--bone);
+  }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    position: fixed;
+    bottom: 2rem;
+    right: 2.25rem;
+    z-index: 10;
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--bone-faint);
+    text-align: right;
+    line-height: 1.85;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud b {
+    color: var(--bone-dim);
+    font-weight: 400;
+    margin-right: 0.5rem;
+  }
+  .hud .live {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--cinnabar);
+    margin-left: 0.5rem;
+    margin-bottom: 1px;
+    vertical-align: middle;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; box-shadow: 0 0 8px var(--cinnabar); }
+  }
+
+  /* page-load reveal */
+  .reveal {
+    opacity: 0;
+    animation: fadeIn 1.2s ease-out forwards;
+  }
+  .reveal-1 { animation-delay: 0.15s; }
+  .reveal-2 { animation-delay: 0.35s; }
+  .reveal-3 { animation-delay: 0.55s; }
+  .reveal-4 { animation-delay: 0.75s; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .controls.reveal-3 { animation-name: fadeInRight; }
+  @keyframes fadeInRight {
+    from { opacity: 0; transform: translate(8px, -50%); }
+    to   { opacity: 1; transform: translate(0, -50%); }
+  }
+
+  /* ---------- Tab nav ---------- */
+  .tabs {
+    position: fixed;
+    top: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    color: var(--bone-faint);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0.65rem 1rem 0.7rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    position: relative;
+    transition: color 0.25s;
+  }
+  .tab .ja {
+    font-family: 'Shippori Mincho B1', serif;
+    font-size: 1.05rem;
+    color: var(--gold);
+    font-style: italic;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+  .tab:hover { color: var(--bone-dim); }
+  .tab.active { color: var(--bone); }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 1px;
+    background: var(--cinnabar);
+    box-shadow: 0 0 8px rgba(193,39,45,0.6);
+  }
+  .tab-sep {
+    width: 1px;
+    height: 0.8rem;
+    background: var(--bone-faint);
+  }
+
+  /* mode-scoped chrome */
+  body:not(.mode-v2) .growth-control { display: none !important; }
+  body:not(.mode-v3) .drift-readout  { display: none !important; }
+  /* In drift mode, sliders are autonomous — dim them slightly */
+  body.mode-v3 .controls input[type="range"] { opacity: 0.55; }
+
+  /* ---------- Source button + code modal ---------- */
+  .source-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 1.1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--bone-faint);
+    color: var(--bone-dim);
+    padding: 0.4rem 0.75rem 0.42rem;
+    cursor: pointer;
+    width: max-content;
+    transition: all 0.2s;
+  }
+  .source-btn:hover {
+    color: var(--cinnabar);
+    border-color: var(--cinnabar);
+    background: rgba(193,39,45,0.06);
+  }
+  .source-btn .plus {
+    font-size: 0.95rem;
+    font-weight: 300;
+    line-height: 1;
+    margin-top: -1px;
+  }
+
+  .code-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    pointer-events: none;            /* wide screens: don't block the spiral */
+    transition: background-color 0.25s ease, backdrop-filter 0.25s ease;
+  }
+  .code-modal.open { display: block; }
+  /* On narrow screens, the modal gets a backdrop and catches outside-clicks */
+  @media (max-width: 900px) {
+    .code-modal.open {
+      background: rgba(5, 4, 3, 0.88);
+      backdrop-filter: blur(14px) saturate(1.1);
+      -webkit-backdrop-filter: blur(14px) saturate(1.1);
+      pointer-events: auto;
+    }
+  }
+  .code-panel {
+    position: fixed;
+    top: 1.5rem;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    width: min(440px, calc(50vw - 2rem));
+    background: rgba(10, 9, 8, 0.97);
+    border: 1px solid var(--bone-faint);
+    border-left: 2px solid var(--cinnabar);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    transform: translateX(-12px);
+    opacity: 0;
+    pointer-events: auto;
+    transition: transform 0.28s ease, opacity 0.2s ease;
+  }
+  .code-modal.open .code-panel { transform: translateX(0); opacity: 1; }
+  @media (max-width: 900px) {
+    .code-panel {
+      left: 1rem;
+      right: 1rem;
+      top: 1rem;
+      bottom: 1rem;
+      width: auto;
+    }
+  }
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 1.25rem 1.5rem 0.85rem;
+    border-bottom: 1px solid var(--bone-faint);
+    gap: 1rem;
+  }
+  .code-header .titles { display: flex; flex-direction: column; gap: 0.35rem; }
+  .code-header .en {
+    font-size: 0.66rem;
+    letter-spacing: 0.36em;
+    color: var(--bone-dim);
+    text-transform: uppercase;
+  }
+  .code-header .ja {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--cinnabar);
+    letter-spacing: 0.1em;
+  }
+  .code-header .note {
+    font-size: 0.55rem;
+    color: var(--bone-faint);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-top: 0.15rem;
+  }
+  .code-close {
+    background: transparent;
+    border: 1px solid var(--bone-faint);
+    color: var(--bone-dim);
+    font-size: 0.85rem;
+    cursor: pointer;
+    width: 1.85rem;
+    height: 1.85rem;
+    line-height: 1;
+    transition: all 0.15s;
+    font-family: 'IBM Plex Mono', monospace;
+    flex: none;
+    padding: 0;
+  }
+  .code-close:hover {
+    color: var(--cinnabar);
+    border-color: var(--cinnabar);
+  }
+  .code-body {
+    padding: 1.1rem 1.5rem 1.5rem;
+    overflow: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.75;
+    color: var(--bone);
+    white-space: pre;
+    tab-size: 2;
+  }
+  .code-body .c  { color: var(--gold); font-style: italic; opacity: 0.88; }
+  .code-body .k  { color: var(--cinnabar); }
+  .code-body .s  { color: rgba(176, 141, 87, 0.85); }
+  .code-body .n  { color: var(--bone-dim); }
+
+  /* ============================================================ */
+  /* MOBILE (≤ 768px) — touch targets, collapsible controls drawer */
+  /* ============================================================ */
+  @media (max-width: 768px) {
+    .kanji-mark {
+      font-size: 2.4rem;
+      top: 0.9rem;
+      left: 0.9rem;
+      writing-mode: horizontal-tb;
+      letter-spacing: 0;
+    }
+    .romaji-stack {
+      top: 1rem;
+      left: 4.2rem;
+    }
+    .romaji-stack .title { font-size: 0.85rem; }
+    .romaji-stack .subtitle {
+      font-size: 0.5rem;
+      letter-spacing: 0.22em;
+      margin-top: 0.35rem;
+    }
+    .romaji-stack .index { display: none; }
+    .source-btn {
+      margin-top: 0.55rem;
+      font-size: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      letter-spacing: 0.2em;
+    }
+
+    .tabs {
+      top: 0.9rem;
+      right: 0.9rem;
+      left: auto;
+      transform: none;
+      gap: 0.15rem;
+    }
+    .tab { padding: 0.5rem 0.55rem; font-size: 0.55rem; letter-spacing: 0.22em; gap: 0.5rem; }
+    .tab .ja { font-size: 0.85rem; }
+    .tab.active::after { left: 0.55rem; right: 0.55rem; }
+    .tab-sep { display: none; }
+
+    .formula { display: none; }
+    .hud { display: none; }
+
+    .controls {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      transform: none;
+      border-left: none;
+      border-top: 2px solid var(--cinnabar);
+      max-height: 65vh;
+      overflow-y: auto;
+      padding: 0.9rem 1.1rem 1.5rem;
+      transition: transform 0.32s ease;
+      animation: none !important;
+      opacity: 1 !important;
+    }
+    body.controls-collapsed .controls {
+      transform: translateY(calc(100% - 3.15rem));
+    }
+    .controls-title {
+      cursor: pointer;
+      margin-bottom: 1rem;
+      padding-bottom: 0.65rem;
+      position: relative;
+    }
+    .controls-title::after {
+      content: '▾';
+      position: absolute;
+      right: 0;
+      bottom: 0.65rem;
+      color: var(--bone-dim);
+      font-size: 0.85rem;
+      line-height: 1;
+      transition: transform 0.2s;
+    }
+    body.controls-collapsed .controls-title::after { transform: rotate(180deg); }
+
+    /* Bigger touch targets */
+    input[type="range"] {
+      height: 6px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      width: 4px;
+      height: 26px;
+      box-shadow: 0 0 14px rgba(245,240,230,0.7);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 4px;
+      height: 26px;
+    }
+    .slider-group { margin-bottom: 1.25rem; }
+    .slider-label { font-size: 0.62rem; }
+    .slider-label .value { font-size: 0.68rem; }
+    button { min-height: 44px; font-size: 0.6rem; padding: 0.6rem 0.4rem; }
+
+    /* Tighter code panel padding */
+    .code-body { font-size: 0.68rem; line-height: 1.65; padding: 1rem 1.1rem 1.2rem; }
+    .code-header { padding: 1rem 1.1rem 0.75rem; }
+  }
+
+  /* iOS Safari safe-area insets — give bottom drawer breathing room */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    @media (max-width: 768px) {
+      .controls {
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+      }
+    }
+  }
+</style>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="cb" content="beb511d6">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/62.svg?v=beb511d6">
+  <script src="./cb-badge.js?v=beb511d6" defer></script>
+</head>
+<body class="mode-v1">
+  <canvas id="canvas"></canvas>
+
+  <nav class="tabs reveal reveal-1">
+    <button class="tab active" data-mode="v1">
+      <span class="ver">V1</span>
+      <span class="ja">渦</span>
+    </button>
+    <span class="tab-sep"></span>
+    <button class="tab" data-mode="v2">
+      <span class="ver">V2</span>
+      <span class="ja">種</span>
+    </button>
+    <span class="tab-sep"></span>
+    <button class="tab" data-mode="v3">
+      <span class="ver">V3</span>
+      <span class="ja">夢</span>
+    </button>
+  </nav>
+
+  <div class="kanji-mark reveal reveal-1">渦巻</div>
+
+  <div class="romaji-stack reveal reveal-2">
+    <div class="title">uzumaki</div>
+    <div class="subtitle" id="subtitle">parametric study · nº 01</div>
+    <div class="index" id="index">渦 · spiral · vortex</div>
+    <button class="source-btn" id="open-source" type="button" aria-label="view source code">
+      <span class="plus">+</span>
+      <span class="lbl">source</span>
+    </button>
+  </div>
+
+  <div class="formula reveal reveal-4">
+    <div><em>r</em>(<b>t</b>) &nbsp; = &nbsp; <b>t</b><em>ᵖ</em> &nbsp;÷&nbsp; (<b>t</b> + <em>d</em>)</div>
+    <div><em>θ</em>(<b>t</b>) &nbsp; = &nbsp; <em>c</em><b>t</b> &nbsp;+&nbsp; sin( <em>c</em><b>t</b> · sin( <em>κ</em><b>t</b> ) )</div>
+  </div>
+
+  <aside class="controls reveal reveal-3">
+    <div class="controls-title">
+      <span class="en">parameters</span>
+      <span class="ja">変数</span>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="name"><span class="sym">κ</span> kappa <span class="ja">核</span></span>
+        <span class="value" id="v-kappa">83.333</span>
+      </div>
+      <input type="range" id="kappa" min="0" max="200" step="0.001" value="83.333">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="name"><span class="sym">p</span> power <span class="ja">勢</span></span>
+        <span class="value" id="v-power">1.500</span>
+      </div>
+      <input type="range" id="power" min="0.5" max="3" step="0.001" value="1.5">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="name"><span class="sym">d</span> divisor <span class="ja">幅</span></span>
+        <span class="value" id="v-divisor">1000</span>
+      </div>
+      <input type="range" id="divisor" min="100" max="3000" step="1" value="1000">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="name"><span class="sym">c</span> twist <span class="ja">捻</span></span>
+        <span class="value" id="v-coeff">0.100</span>
+      </div>
+      <input type="range" id="coeff" min="0.01" max="0.5" step="0.001" value="0.1">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="name"><span class="sym">t</span> extent <span class="ja">道</span></span>
+        <span class="value" id="v-tmax">300</span>
+      </div>
+      <input type="range" id="tmax" min="50" max="800" step="1" value="300">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="name"><span class="sym">s</span> scale <span class="ja">寸</span></span>
+        <span class="value" id="v-scale">90</span>
+      </div>
+      <input type="range" id="scale" min="30" max="300" step="1" value="90">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="name"><span class="sym">ω</span> speed <span class="ja">速</span></span>
+        <span class="value" id="v-phase">0.00000100</span>
+      </div>
+      <input type="range" id="phase" min="-0.00001" max="0.00001" step="0.00000001" value="0.000001">
+    </div>
+
+    <div class="slider-group growth-control">
+      <div class="slider-label">
+        <span class="name"><span class="sym">γ</span> growth · sec <span class="ja">芽</span></span>
+        <span class="value" id="v-growth">8.0</span>
+      </div>
+      <input type="range" id="growth" min="0.5" max="60" step="0.1" value="8">
+    </div>
+
+    <div class="footer-actions">
+      <button id="reset">reset</button>
+      <button id="regrow" class="growth-control">regrow</button>
+      <button id="pause" class="primary">pause</button>
+    </div>
+  </aside>
+
+  <div class="hud reveal reveal-4">
+    <div><b>fps</b><span id="fps">—</span></div>
+    <div><b>samples</b><span id="samples">—</span></div>
+    <div><b>phase</b><span id="phaseval">0.0000000</span></div>
+    <div class="drift-readout"><b>夢 drift</b><span id="driftval">— —</span></div>
+    <div><b>渦</b>animate<span class="live"></span></div>
+  </div>
+
+  <div class="code-modal" id="code-modal" role="dialog" aria-modal="true" aria-label="source code">
+    <div class="code-panel">
+      <div class="code-header">
+        <div class="titles">
+          <span class="en">source · the heart</span>
+          <span class="ja">渦の精髄</span>
+          <span class="note">~80 lines · distilled from index.html</span>
+        </div>
+        <button class="code-close" id="code-close" type="button" aria-label="close">×</button>
+      </div>
+      <div class="code-body" id="code-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      canvas.width = Math.floor(w * DPR);
+      canvas.height = Math.floor(h * DPR);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const defaults = {
+      kappa: 83.333, power: 1.5, divisor: 1000,
+      coeff: 0.1, tmax: 300, scale: 90, phase: 0.000001,
+      growth: 8,
+    };
+    const params = { ...defaults };
+    let phase = 0;
+    let paused = false;
+    let mode = 'v1';
+    let growthT = params.tmax; // current grown extent in V2; equals tmax in V1
+
+    // ---------- V3 drift state ----------
+    // One knob at a time, small delta, long interval. The dream is patient.
+    const DRIFT_KEYS = ['kappa','power','divisor','coeff','tmax','scale','phase'];
+    const DRIFT_SYMBOL = {
+      kappa: 'κ', power: 'p', divisor: 'd', coeff: 'c',
+      tmax: 't', scale: 's', phase: 'ω',
+    };
+    // [min, max, max-step-magnitude] for the per-nudge bounded random walk
+    const DRIFT_RANGES = {
+      kappa:   [0,        200,      2.5      ],
+      power:   [1.0,      2.4,      0.04     ],
+      divisor: [100,      2500,     40       ],
+      coeff:   [0.01,     0.3,      0.004    ],
+      tmax:    [50,       600,      15       ],
+      scale:   [30,       180,      4        ],
+      phase:   [-0.00001, 0.00001,  0.0000003],
+    };
+
+    let driftKey = null;
+    let driftStartVal = 0, driftTargetVal = 0;
+    let driftElapsed = 0, driftInterval = 0;
+    let driftSyncTimer = 0;
+    let cycleElapsed = 0, cycleDuration = 0;   // V3 regrowth cycle
+
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const easeInOutQuad = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+
+    function pickNextDrift() {
+      // Choose one parameter and nudge it slightly within its bounds.
+      driftKey = DRIFT_KEYS[Math.floor(Math.random() * DRIFT_KEYS.length)];
+      driftStartVal = params[driftKey];
+      const [lo, hi, maxStep] = DRIFT_RANGES[driftKey];
+      const delta = (Math.random() - 0.5) * 2 * maxStep;
+      driftTargetVal = Math.max(lo, Math.min(hi, driftStartVal + delta));
+      driftInterval = rand(15, 40);   // very patient
+      driftElapsed = 0;
+    }
+
+    function initDrift() {
+      // Quiet, contemplative opening state.
+      Object.assign(params, {
+        kappa:   1.447,
+        power:   1.934,
+        divisor: 100,
+        coeff:   0.010,
+        tmax:    50,
+        scale:   30,
+        phase:   -0.00001,
+        growth:  5.0,
+      });
+      driftKey = null;
+      pickNextDrift();
+      driftSyncTimer = 0;
+      growthT = 0;                  // start from a single dot
+      cycleElapsed = 0;
+      cycleDuration = rand(60, 180); // rebirth every 1–3 minutes
+      syncReadouts();
+    }
+
+    function driftTick(dt) {
+      driftElapsed += dt;
+      const t = Math.min(1, driftElapsed / driftInterval);
+      const e = easeInOutQuad(t);
+      params[driftKey] = driftStartVal + (driftTargetVal - driftStartVal) * e;
+      if (t >= 1) pickNextDrift();
+
+      // Periodic rebirth: reset to a single dot, params keep drifting
+      cycleElapsed += dt;
+      if (cycleElapsed >= cycleDuration) {
+        growthT = 0;
+        cycleElapsed = 0;
+        cycleDuration = rand(60, 180);
+      }
+
+      driftSyncTimer += dt;
+      if (driftSyncTimer > 0.15) {
+        driftSyncTimer = 0;
+        syncReadouts();
+      }
+    }
+
+    const bindings = [
+      ['kappa',   'v-kappa',   v => v.toFixed(3)],
+      ['power',   'v-power',   v => v.toFixed(3)],
+      ['divisor', 'v-divisor', v => v.toFixed(0)],
+      ['coeff',   'v-coeff',   v => v.toFixed(3)],
+      ['tmax',    'v-tmax',    v => v.toFixed(0)],
+      ['scale',   'v-scale',   v => v.toFixed(0)],
+      ['phase',   'v-phase',   v => v.toFixed(8)],
+      ['growth',  'v-growth',  v => v.toFixed(1)],
+    ];
+
+    function syncReadouts() {
+      bindings.forEach(([k, id, fmt]) => {
+        document.getElementById(id).textContent = fmt(params[k]);
+        document.getElementById(k).value = params[k];
+      });
+    }
+
+    bindings.forEach(([k, id, fmt]) => {
+      const el = document.getElementById(k);
+      el.addEventListener('input', e => {
+        params[k] = parseFloat(e.target.value);
+        document.getElementById(id).textContent = fmt(params[k]);
+      });
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      Object.assign(params, defaults);
+      phase = 0;
+      growthT = (mode === 'v2') ? 0 : params.tmax;
+      if (mode === 'v3') initDrift();
+      syncReadouts();
+    });
+
+    document.getElementById('regrow').addEventListener('click', () => {
+      growthT = 0;
+    });
+
+    const pauseBtn = document.getElementById('pause');
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'play' : 'pause';
+    });
+
+    // Tab switching
+    const subtitleEl = document.getElementById('subtitle');
+    const indexEl    = document.getElementById('index');
+    const modeMeta = {
+      v1: { subtitle: 'parametric study · nº 01', index: '渦 · spiral · vortex' },
+      v2: { subtitle: 'germination study · nº 02', index: '種 · seed · unfurling' },
+      v3: { subtitle: 'drift study · nº 03',        index: '夢 · dream · self-modulating' },
+    };
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+        mode = btn.dataset.mode;
+        document.body.classList.toggle('mode-v1', mode === 'v1');
+        document.body.classList.toggle('mode-v2', mode === 'v2');
+        document.body.classList.toggle('mode-v3', mode === 'v3');
+        subtitleEl.textContent = modeMeta[mode].subtitle;
+        indexEl.textContent    = modeMeta[mode].index;
+        if (mode === 'v2')      growthT = 0;
+        else if (mode === 'v3') initDrift();   // initDrift resets growthT
+        else                    growthT = params.tmax;
+      });
+    });
+
+    syncReadouts();
+
+    let frameCount = 0, lastFpsT = performance.now();
+    let lastFrameT = performance.now();
+    const fpsEl = document.getElementById('fps');
+    const samplesEl = document.getElementById('samples');
+    const phaseEl = document.getElementById('phaseval');
+    const driftValEl = document.getElementById('driftval');
+
+    function draw() {
+      const W = canvas.width / DPR, H = canvas.height / DPR;
+
+      // Full clear with a near-black wash (a touch of warmth)
+      ctx.fillStyle = '#050403';
+      ctx.fillRect(0, 0, W, H);
+
+      const cx = W / 2, cy = H / 2;
+
+      // time delta (used by both V2 growth and V3 drift)
+      const tNowFrame = performance.now();
+      const dtFrame = Math.min(0.1, (tNowFrame - lastFrameT) / 1000);
+
+      // V3: drift parameters toward new random targets
+      if (mode === 'v3' && !paused) driftTick(dtFrame);
+
+      const { kappa, power, divisor, coeff, tmax, scale } = params;
+
+      // V2 + V3: advance growth toward tmax over params.growth seconds
+      const usesGrowth = (mode === 'v2' || mode === 'v3');
+      if (usesGrowth && !paused && growthT < tmax) {
+        const growRate = tmax / Math.max(0.1, params.growth);
+        growthT = Math.min(tmax, growthT + growRate * dtFrame);
+      }
+      const tCap = usesGrowth ? growthT : tmax;
+      const isGrowing = usesGrowth && (growthT < tmax);
+
+      // adaptive sampling — keep roughly 5–6k points regardless of tmax
+      const targetSamples = 5500;
+      const step = Math.max(0.02, tmax / targetSamples);
+
+      const pts = [];
+      for (let t = 0; t < tCap; t += step) {
+        const r = Math.pow(t, power) / (t + divisor);
+        const inner = Math.sin((kappa + phase) * t);
+        const theta = coeff * t + Math.sin(coeff * t * inner);
+        pts.push(cx + scale * r * Math.cos(theta));
+        pts.push(cy + scale * r * Math.sin(theta));
+      }
+
+      function strokePath(strokeStyle, lineWidth) {
+        if (pts.length < 4) return;
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(pts[0], pts[1]);
+        for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i+1]);
+        ctx.stroke();
+      }
+
+      // outer cinnabar bloom
+      strokePath('rgba(193, 39, 45, 0.07)', 5);
+      // mid gold haze
+      strokePath('rgba(176, 141, 87, 0.16)', 1.8);
+      // soft bone halo
+      strokePath('rgba(245, 240, 230, 0.22)', 1.1);
+      // crisp bone core
+      strokePath('rgba(245, 240, 230, 0.95)', 0.55);
+
+      // V2 + V3: the seed/tip — a luminous dot at the current growth front
+      if (usesGrowth) {
+        let tipX, tipY;
+        if (pts.length >= 2) {
+          tipX = pts[pts.length - 2];
+          tipY = pts[pts.length - 1];
+        } else {
+          tipX = cx; tipY = cy;
+        }
+        // outer cinnabar halo
+        if (isGrowing) {
+          ctx.fillStyle = 'rgba(193, 39, 45, 0.25)';
+          ctx.beginPath();
+          ctx.arc(tipX, tipY, 14, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(176, 141, 87, 0.35)';
+          ctx.beginPath();
+          ctx.arc(tipX, tipY, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // bone core dot
+        ctx.fillStyle = isGrowing ? 'rgba(245, 240, 230, 1)' : 'rgba(245, 240, 230, 0.7)';
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, isGrowing ? 2.2 : 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      samplesEl.textContent = (pts.length / 2).toFixed(0);
+      phaseEl.textContent = phase.toFixed(7);
+      if (mode === 'v3' && driftKey) {
+        const remain = Math.max(0, driftInterval - driftElapsed);
+        const cycleRem = Math.max(0, cycleDuration - cycleElapsed);
+        driftValEl.textContent = `${DRIFT_SYMBOL[driftKey]} ${remain.toFixed(1)}s · ↻${cycleRem.toFixed(0)}s`;
+      }
+
+      lastFrameT = tNowFrame;
+      // params.phase is calibrated as "per-frame at 60fps" — multiply by dt*60 for framerate independence
+      if (!paused) phase += params.phase * dtFrame * 60;
+
+      frameCount++;
+      const now = performance.now();
+      if (now - lastFpsT > 500) {
+        fpsEl.textContent = Math.round(frameCount * 1000 / (now - lastFpsT));
+        frameCount = 0; lastFpsT = now;
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+
+    // ---------- Source modal ----------
+    const codeModal = document.getElementById('code-modal');
+    const codeBody  = document.getElementById('code-body');
+
+    // Highlighted via simple span wrapping. <span class="c"> = comment,
+    // .k = keyword, .s = string, .n = number. Pre-built so we keep `pre`
+    // whitespace intact.
+    const SRC_HTML = [
+      '<span class="c">// ════════════════════════════════════════════════════════</span>',
+      '<span class="c">// THE UZUMAKI FORMULA · 渦巻の式</span>',
+      '<span class="c">// A parametric spiral driven by nested sines. κ governs</span>',
+      '<span class="c">// the phase beating between inner and outer cycles —</span>',
+      '<span class="c">// tiny shifts produce dramatic change at large t.</span>',
+      '<span class="c">// ════════════════════════════════════════════════════════</span>',
+      '',
+      '<span class="k">const</span> pts = [];',
+      '<span class="k">for</span> (<span class="k">let</span> t = <span class="n">0</span>; t &lt; tmax; t += step) {',
+      '  <span class="k">const</span> r     = Math.pow(t, power) / (t + divisor);',
+      '  <span class="k">const</span> inner = Math.sin((kappa + phase) * t);',
+      '  <span class="k">const</span> theta = coeff * t + Math.sin(coeff * t * inner);',
+      '  pts.push(cx + scale * r * Math.cos(theta));',
+      '  pts.push(cy + scale * r * Math.sin(theta));',
+      '}',
+      '',
+      '<span class="c">// ─── multi-pass rendering · 四重墨 ───</span>',
+      '<span class="c">// Four overlaid strokes give a sumi-e quality:</span>',
+      '<span class="c">// cinnabar bloom · gold haze · bone halo · white core.</span>',
+      '',
+      '<span class="k">function</span> strokePath(color, width) {',
+      '  <span class="k">if</span> (pts.length &lt; <span class="n">4</span>) <span class="k">return</span>;',
+      '  ctx.strokeStyle = color;',
+      '  ctx.lineWidth = width;',
+      '  ctx.lineJoin = <span class="s">\'round\'</span>;',
+      '  ctx.beginPath();',
+      '  ctx.moveTo(pts[<span class="n">0</span>], pts[<span class="n">1</span>]);',
+      '  <span class="k">for</span> (<span class="k">let</span> i = <span class="n">2</span>; i &lt; pts.length; i += <span class="n">2</span>)',
+      '    ctx.lineTo(pts[i], pts[i + <span class="n">1</span>]);',
+      '  ctx.stroke();',
+      '}',
+      '',
+      'strokePath(<span class="s">\'rgba(193,  39,  45, 0.07)\'</span>, <span class="n">5.0</span>);',
+      'strokePath(<span class="s">\'rgba(176, 141,  87, 0.16)\'</span>, <span class="n">1.8</span>);',
+      'strokePath(<span class="s">\'rgba(245, 240, 230, 0.22)\'</span>, <span class="n">1.1</span>);',
+      'strokePath(<span class="s">\'rgba(245, 240, 230, 0.95)\'</span>, <span class="n">0.55</span>);',
+      '',
+      '<span class="c">// ─── V2 · 種 · growth ───</span>',
+      '<span class="c">// The spiral unfurls from t = 0 outward over `growth`</span>',
+      '<span class="c">// seconds, with a luminous tip at the leading edge.</span>',
+      '',
+      '<span class="k">if</span> (mode === <span class="s">\'v2\'</span> &amp;&amp; !paused &amp;&amp; growthT &lt; tmax) {',
+      '  growthT += (tmax / params.growth) * dt;',
+      '}',
+      '<span class="k">const</span> tCap = (mode === <span class="s">\'v2\'</span>) ? growthT : tmax;',
+      '',
+      '<span class="c">// ─── V3 · 夢 · drift ───</span>',
+      '<span class="c">// Every 3–12 seconds (re-rolled each tick), pick new</span>',
+      '<span class="c">// random targets for every parameter, then ease toward</span>',
+      '<span class="c">// them along a quadratic in-out curve. Endless dream.</span>',
+      '',
+      '<span class="k">const</span> easeInOutQuad = t =&gt;',
+      '  t &lt; <span class="n">0.5</span> ? <span class="n">2</span>*t*t : <span class="n">1</span> - Math.pow(-<span class="n">2</span>*t + <span class="n">2</span>, <span class="n">2</span>) / <span class="n">2</span>;',
+      '',
+      '<span class="k">function</span> driftTick(dt) {',
+      '  driftElapsed += dt;',
+      '  <span class="k">const</span> t = Math.min(<span class="n">1</span>, driftElapsed / driftInterval);',
+      '  <span class="k">const</span> e = easeInOutQuad(t);',
+      '',
+      '  <span class="k">for</span> (<span class="k">const</span> k <span class="k">of</span> DRIFT_KEYS) {',
+      '    params[k] = driftFrom[k]',
+      '              + (driftTo[k] - driftFrom[k]) * e;',
+      '  }',
+      '',
+      '  <span class="k">if</span> (t &gt;= <span class="n">1</span>) {',
+      '    driftFrom = { ...driftTo };',
+      '    driftTo = randomDriftTarget();',
+      '    driftInterval = <span class="n">3</span> + Math.random() * <span class="n">9</span>;',
+      '    driftElapsed = <span class="n">0</span>;',
+      '  }',
+      '}',
+    ].join('\n');
+    codeBody.innerHTML = SRC_HTML;
+
+    function openCode()  { codeModal.classList.add('open'); }
+    function closeCode() { codeModal.classList.remove('open'); }
+    document.getElementById('open-source').addEventListener('click', openCode);
+    document.getElementById('code-close').addEventListener('click', closeCode);
+    codeModal.addEventListener('click', e => { if (e.target === codeModal) closeCode(); });
+
+    // Spacebar pauses · Esc closes modal
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Escape' && codeModal.classList.contains('open')) {
+        closeCode();
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        pauseBtn.click();
+      } else if (e.code === 'KeyR') {
+        document.getElementById('reset').click();
+      }
+    });
+
+    // ---------- Mobile: collapsible controls drawer ----------
+    const mq = window.matchMedia('(max-width: 768px)');
+    function applyMobileLayout() {
+      if (mq.matches) document.body.classList.add('controls-collapsed');
+      else             document.body.classList.remove('controls-collapsed');
+    }
+    applyMobileLayout();
+    mq.addEventListener('change', applyMobileLayout);
+
+    document.querySelector('.controls-title').addEventListener('click', () => {
+      if (mq.matches) document.body.classList.toggle('controls-collapsed');
+    });
+
+    // ---------- PWA: register service worker ----------
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>渦巻 · offline</title>
+<link rel="manifest" href="./manifest.webmanifest?v=beb511d6">
+<meta name="theme-color" content="#050403">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;800&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: #050403;
+    color: #f5f0e6;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+  .kanji {
+    font-family: 'Shippori Mincho B1', serif;
+    font-weight: 800;
+    font-size: 7rem;
+    color: #c1272d;
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(193,39,45,0.4);
+    margin-bottom: 1.5rem;
+  }
+  h1 {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.3rem;
+    letter-spacing: 0.18em;
+    color: rgba(245,240,230,0.7);
+    margin-bottom: 0.5rem;
+  }
+  p {
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(245,240,230,0.4);
+    margin-bottom: 2rem;
+  }
+  button {
+    background: transparent;
+    border: 1px solid rgba(245,240,230,0.18);
+    color: rgba(245,240,230,0.55);
+    padding: 0.7rem 1.4rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button:hover {
+    color: #c1272d;
+    border-color: #c1272d;
+  }
+</style>
+</head>
+<body>
+  <main>
+    <div class="kanji">渦</div>
+    <h1>offline</h1>
+    <p>no signal · stillness</p>
+    <button onclick="location.reload()">retry</button>
+  </main>
+</body>
+</html>
