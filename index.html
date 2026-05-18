@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=8502952d">
+<link rel="manifest" href="./manifest.webmanifest?v=804376c5">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=8502952d">
+<link rel="apple-touch-icon" href="./icon.svg?v=804376c5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=8502952d");
+    background-image: url("./noise.svg?v=804376c5");
   }
 
   body::after {
@@ -183,7 +183,15 @@
     box-shadow:
       0 30px 80px rgba(0,0,0,0.5),
       inset 0 1px 0 rgba(245,240,230,0.04);
+    max-height: calc(100vh - 5rem);
+    max-height: calc(100dvh - 5rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bone-faint) transparent;
   }
+  .controls::-webkit-scrollbar { width: 4px; }
+  .controls::-webkit-scrollbar-track { background: transparent; }
+  .controls::-webkit-scrollbar-thumb { background: var(--bone-faint); }
 
   .controls-title {
     display: flex;
@@ -326,6 +334,142 @@
     background: rgba(193,39,45,0.14);
     box-shadow: 0 0 12px rgba(193,39,45,0.25);
   }
+
+  /* ---------- Preset / keyframe section ---------- */
+  .presets {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--bone-faint);
+  }
+  .presets-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.7rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+  }
+  .presets-title .ja {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    color: var(--cinnabar);
+    letter-spacing: 0.06em;
+    font-size: 0.9rem;
+    text-transform: none;
+  }
+  .preset-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.7rem;
+    min-height: 1.7rem;
+  }
+  .preset-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.5rem 0.36rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: none;
+    background: rgba(245, 240, 230, 0.04);
+    border: 1px solid var(--bone-faint);
+    color: var(--bone-dim);
+    cursor: pointer;
+    transition: all 0.18s;
+    flex: none;
+    line-height: 1;
+  }
+  .preset-chip:hover {
+    color: var(--cinnabar);
+    border-color: var(--cinnabar);
+    background: rgba(193, 39, 45, 0.06);
+  }
+  .preset-chip .del {
+    font-size: 0.95em;
+    margin-left: 0.05rem;
+    color: var(--bone-faint);
+    transition: color 0.15s;
+    line-height: 1;
+  }
+  .preset-chip:hover .del { color: var(--bone-dim); }
+  .preset-chip .del:hover { color: var(--cinnabar); }
+  .preset-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--bone-faint);
+    padding: 0.45rem 0.1rem;
+  }
+  .preset-row {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    margin-bottom: 0.55rem;
+  }
+  .preset-btn {
+    flex: 1;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.4rem;
+    background: transparent;
+    border: 1px solid var(--bone-faint);
+    color: var(--bone-dim);
+    cursor: pointer;
+    transition: all 0.18s;
+    min-height: 0;
+  }
+  .preset-btn:hover:not(:disabled) {
+    color: var(--cinnabar);
+    border-color: var(--cinnabar);
+    background: rgba(193, 39, 45, 0.06);
+  }
+  .preset-btn:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+  }
+  .preset-btn.active {
+    background: var(--cinnabar);
+    color: var(--bone);
+    border-color: var(--cinnabar);
+  }
+  .preset-duration {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+    margin-bottom: 0.4rem;
+  }
+  .preset-duration .lbl { flex: none; width: 4.2rem; }
+  .preset-duration input[type="range"] { flex: 1; height: 2px; }
+  .preset-duration .val {
+    flex: none;
+    width: 2.5rem;
+    text-align: right;
+    color: var(--bone);
+    font-variant-numeric: tabular-nums;
+  }
+  .preset-copied {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--cinnabar);
+    text-align: center;
+    height: 1rem;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .preset-copied.show { opacity: 1; }
+  /* dim sliders when sequencer drives them */
+  body.sequencer-active .controls input[type="range"] { opacity: 0.55; }
 
   button {
     flex: 1;
@@ -745,9 +889,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="8502952d">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/05.svg?v=8502952d">
-  <script src="./cb-badge.js?v=8502952d" defer></script>
+  <meta name="cb" content="804376c5">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/00.svg?v=804376c5">
+  <script src="./cb-badge.js?v=804376c5" defer></script>
 </head>
 <body>
   <canvas id="canvas"></canvas>
@@ -780,6 +924,24 @@
       <button class="play-mode-btn"        data-mode="drift"   type="button" title="drift · eased noise" aria-label="drift">⇢</button>
     </div>
     <div id="dynamic-sliders"></div>
+    <div class="presets">
+      <div class="presets-title">
+        <span class="en">presets</span>
+        <span class="ja">記憶</span>
+      </div>
+      <div class="preset-list" id="preset-list"></div>
+      <div class="preset-row">
+        <button class="preset-btn" id="preset-save" type="button">+ snap</button>
+        <button class="preset-btn" id="preset-play" type="button" disabled>▶ tour</button>
+        <button class="preset-btn" id="preset-copy" type="button" disabled>copy csv</button>
+      </div>
+      <div class="preset-row preset-duration">
+        <span class="lbl">seg · sec</span>
+        <input type="range" id="preset-dur" min="1" max="30" step="0.5" value="5">
+        <span class="val" id="preset-dur-val">5.0</span>
+      </div>
+      <div class="preset-copied" id="preset-copied">copied!</div>
+    </div>
     <div class="footer-actions">
       <button id="reset">reset</button>
       <button id="pause" class="primary">pause</button>
@@ -850,6 +1012,215 @@
         default:
           return 1;
       }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // PRESET KEYFRAME SYSTEM
+    // Per-viz snapshots + Catmull-Rom tour + CSV export
+    // ════════════════════════════════════════════════════════════════════
+    const PRESETS_KEY = 'uzumaki-presets-v1';
+    const presets = {};
+    let seqActive = false;
+    let seqIdx = 0;
+    let seqElapsed = 0;
+    let seqSyncTimer = 0;
+    let seqDuration = 5;
+
+    try {
+      const raw = localStorage.getItem(PRESETS_KEY);
+      if (raw) Object.assign(presets, JSON.parse(raw));
+    } catch (_) {}
+
+    function getPresets(vizId) {
+      if (!presets[vizId]) presets[vizId] = [];
+      return presets[vizId];
+    }
+    function persistPresets() {
+      try { localStorage.setItem(PRESETS_KEY, JSON.stringify(presets)); }
+      catch (_) {}
+    }
+    function clampParam(key, v) {
+      const def = activeViz && activeViz.params.find(p => p.key === key);
+      if (!def) return v;
+      return Math.max(def.min, Math.min(def.max, v));
+    }
+    // Catmull-Rom interpolation between p1 and p2 with p0,p3 as neighbours.
+    function catmullRom(p0, p1, p2, p3, t) {
+      const t2 = t*t, t3 = t2*t;
+      return 0.5 * (
+        2*p1 +
+        (-p0 + p2) * t +
+        (2*p0 - 5*p1 + 4*p2 - p3) * t2 +
+        (-p0 + 3*p1 - 3*p2 + p3) * t3
+      );
+    }
+
+    function savePreset() {
+      if (!activeId) return;
+      const list = getPresets(activeId);
+      list.push({ name: 'P' + (list.length + 1), params: { ...currentParams } });
+      persistPresets();
+      renderPresetList();
+    }
+
+    function loadPreset(idx) {
+      const list = getPresets(activeId);
+      const preset = list[idx];
+      if (!preset) return;
+      if (seqActive) setSequencer(false);
+      for (const k of Object.keys(preset.params)) {
+        if (k in currentParams) currentParams[k] = preset.params[k];
+      }
+      syncSliderValues();
+    }
+
+    function deletePreset(idx) {
+      const list = getPresets(activeId);
+      list.splice(idx, 1);
+      list.forEach((p, i) => { p.name = 'P' + (i + 1); });
+      persistPresets();
+      renderPresetList();
+      if (list.length < 2 && seqActive) setSequencer(false);
+    }
+
+    function setSequencer(active) {
+      if (active) {
+        const list = getPresets(activeId);
+        if (list.length < 2) active = false;
+        else {
+          seqIdx = 0;
+          seqElapsed = 0;
+          seqSyncTimer = 0;
+        }
+      }
+      seqActive = active;
+      const btn = document.getElementById('preset-play');
+      if (btn) {
+        btn.classList.toggle('active', seqActive);
+        btn.textContent = seqActive ? '◼ stop' : '▶ tour';
+      }
+      document.body.classList.toggle('sequencer-active', seqActive);
+    }
+
+    function seqTick(dt) {
+      if (!seqActive) return;
+      const list = getPresets(activeId);
+      if (list.length < 2) { setSequencer(false); return; }
+
+      seqElapsed += dt;
+      const t = Math.min(1, seqElapsed / seqDuration);
+      const N = list.length;
+      const i = seqIdx;
+
+      if (N === 2) {
+        const e = easeInOutQuad(t);
+        const a = list[i].params, b = list[(i+1) % N].params;
+        for (const k of Object.keys(b)) {
+          if (typeof b[k] !== 'number' || !(k in currentParams)) continue;
+          const va = (typeof a[k] === 'number') ? a[k] : currentParams[k];
+          currentParams[k] = clampParam(k, va + (b[k] - va) * e);
+        }
+      } else {
+        const p0 = list[(i - 1 + N) % N].params;
+        const p1 = list[i].params;
+        const p2 = list[(i + 1) % N].params;
+        const p3 = list[(i + 2) % N].params;
+        for (const k of Object.keys(p1)) {
+          if (typeof p1[k] !== 'number' || !(k in currentParams)) continue;
+          const v0 = (typeof p0[k] === 'number') ? p0[k] : p1[k];
+          const v1 = p1[k];
+          const v2 = (typeof p2[k] === 'number') ? p2[k] : p1[k];
+          const v3 = (typeof p3[k] === 'number') ? p3[k] : v2;
+          currentParams[k] = clampParam(k, catmullRom(v0, v1, v2, v3, t));
+        }
+      }
+
+      if (t >= 1) {
+        seqIdx = (seqIdx + 1) % N;
+        seqElapsed = 0;
+      }
+      seqSyncTimer += dt;
+      if (seqSyncTimer > 0.1) {
+        seqSyncTimer = 0;
+        syncSliderValues();
+      }
+    }
+
+    function exportCSV() {
+      if (!activeId || !activeViz) return '';
+      const list = getPresets(activeId);
+      if (!list.length) return '';
+      const keys = activeViz.params.map(p => p.key);
+      const head = `# uzumaki · ${activeViz.id} · ${activeViz.short} ${activeViz.ja}\n`;
+      const cols = 'preset,' + keys.join(',') + '\n';
+      const rows = list.map(p =>
+        p.name + ',' + keys.map(k => {
+          const v = p.params[k];
+          return typeof v === 'number' ? +v.toPrecision(8) : '';
+        }).join(',')
+      ).join('\n') + '\n';
+      return head + cols + rows;
+    }
+
+    async function copyPresetsCSV() {
+      const csv = exportCSV();
+      if (!csv) return;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(csv);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = csv;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } catch (_) {}
+          document.body.removeChild(ta);
+        }
+        flashCopied();
+      } catch (_) {}
+    }
+
+    function flashCopied() {
+      const el = document.getElementById('preset-copied');
+      if (!el) return;
+      el.classList.add('show');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 1600);
+    }
+
+    function renderPresetList() {
+      const container = document.getElementById('preset-list');
+      if (!container) return;
+      const list = getPresets(activeId);
+      container.innerHTML = '';
+      if (list.length === 0) {
+        const hint = document.createElement('span');
+        hint.className = 'preset-hint';
+        hint.textContent = 'no snaps yet';
+        container.appendChild(hint);
+      } else {
+        list.forEach((p, i) => {
+          const chip = document.createElement('button');
+          chip.className = 'preset-chip';
+          chip.type = 'button';
+          chip.innerHTML = `<span class="ix">${p.name}</span><span class="del" data-action="delete">×</span>`;
+          chip.addEventListener('click', e => {
+            if (e.target.dataset.action === 'delete') {
+              e.stopPropagation();
+              deletePreset(i);
+            } else {
+              loadPreset(i);
+            }
+          });
+          container.appendChild(chip);
+        });
+      }
+      const playBtn = document.getElementById('preset-play');
+      const copyBtn = document.getElementById('preset-copy');
+      if (playBtn) playBtn.disabled = list.length < 2;
+      if (copyBtn) copyBtn.disabled = list.length === 0;
     }
 
     function fillBg(ctx, W, H) {
@@ -1666,6 +2037,8 @@
         input.addEventListener('input', e => {
           currentParams[p.key] = parseFloat(e.target.value);
           group.querySelector('[data-readout]').textContent = p.fmt(currentParams[p.key]);
+          // Manual slider input stops the sequencer — user takes the wheel
+          if (seqActive) setSequencer(false);
         });
       });
     }
@@ -1683,6 +2056,7 @@
     function activate(vizId) {
       const viz = VIZ.find(v => v.id === vizId);
       if (!viz) return;
+      if (seqActive) setSequencer(false);   // viz switch ends a tour
       activeViz = viz;
       activeId = vizId;
       currentParams = {};
@@ -1698,6 +2072,7 @@
       stateMap[vizId] = {};
       if (viz.setup) viz.setup(stateMap[vizId], W, H, currentParams);
       renderSliders(viz);
+      renderPresetList();
       fillBg(ctx, W, H);
       document.getElementById('active-name').textContent = `${viz.short} · ${viz.ja}`;
     }
@@ -1711,6 +2086,8 @@
           const m = modeRate(stateMap[activeId], dt);
           activeViz.tick(stateMap[activeId], dt, currentParams, m);
         }
+        // sequencer runs AFTER tick so it overrides V3 drift writes
+        if (!paused) seqTick(dt);
         activeViz.draw(ctx, stateMap[activeId], W, H, currentParams);
       }
       frameCount++;
@@ -1746,6 +2123,19 @@
         if (activeId && stateMap[activeId]) stateMap[activeId]._modeT = 0;
       });
     });
+
+    // Preset/keyframe buttons
+    document.getElementById('preset-save').addEventListener('click', savePreset);
+    document.getElementById('preset-play').addEventListener('click', () => setSequencer(!seqActive));
+    document.getElementById('preset-copy').addEventListener('click', copyPresetsCSV);
+    const durSlider = document.getElementById('preset-dur');
+    const durVal    = document.getElementById('preset-dur-val');
+    if (durSlider && durVal) {
+      durSlider.addEventListener('input', e => {
+        seqDuration = parseFloat(e.target.value);
+        durVal.textContent = seqDuration.toFixed(1);
+      });
+    }
 
 
     // ---------- Source modal ----------
