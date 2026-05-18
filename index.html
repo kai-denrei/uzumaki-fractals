@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=82c0cb02">
+<link rel="manifest" href="./manifest.webmanifest?v=8859ef97">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=82c0cb02">
+<link rel="apple-touch-icon" href="./icon.svg?v=8859ef97">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=82c0cb02");
+    background-image: url("./noise.svg?v=8859ef97");
   }
 
   body::after {
@@ -745,9 +745,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="82c0cb02">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/02.svg?v=82c0cb02">
-  <script src="./cb-badge.js?v=82c0cb02" defer></script>
+  <meta name="cb" content="8859ef97">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/08.svg?v=8859ef97">
+  <script src="./cb-badge.js?v=8859ef97" defer></script>
 </head>
 <body class="mode-v3">
   <canvas id="canvas"></canvas>
@@ -855,6 +855,17 @@
     function fillBg(ctx, W, H) {
       ctx.fillStyle = '#050403';
       ctx.fillRect(0, 0, W, H);
+    }
+
+    // Multiplicative fade for density-plot viz. Each pixel decays
+    // exponentially toward pure black (no grey-bg asymptote), so the
+    // bright ribbon stays while the low-density envelope vanishes.
+    function multiplicativeFade(ctx, W, H, fade) {
+      ctx.globalCompositeOperation = 'multiply';
+      const k = Math.max(0, Math.min(255, 255 - Math.floor(255 * fade)));
+      ctx.fillStyle = `rgb(${k},${k},${k})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     function strokePts(ctx, pts, color, width) {
@@ -1303,8 +1314,7 @@
       tick(s, dt, p, m) { s.tdrift += p.drift * m * dt; },
       draw(ctx, s, W, H, p) {
         const cx = W/2, cy = H/2;
-        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
-        ctx.fillRect(0, 0, W, H);
+        multiplicativeFade(ctx, W, H, p.fade);
         const safeR = Math.min(W, H) * 0.44;
         const sc = Math.min(p.scale, safeR / 2);
         const a = p.a + Math.sin(s.tdrift) * 0.06;
@@ -1344,8 +1354,7 @@
       tick(s, dt, p, m) { s.tdrift += p.drift * m * dt; },
       draw(ctx, s, W, H, p) {
         const cx = W/2, cy = H/2;
-        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
-        ctx.fillRect(0, 0, W, H);
+        multiplicativeFade(ctx, W, H, p.fade);
         const safeR = Math.min(W, H) * 0.44;
         const sc = Math.min(p.scale, safeR / 3);
         const a = p.a + Math.sin(s.tdrift) * 0.08;
@@ -1393,8 +1402,7 @@
       tick(s, dt, p, m) { s.theta += p.rot * m * dt; },
       draw(ctx, s, W, H, p) {
         const cx = W/2, cy = H/2;
-        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
-        ctx.fillRect(0, 0, W, H);
+        multiplicativeFade(ctx, W, H, p.fade);
         const safeR = Math.min(W, H) * 0.44;
         const sc = Math.min(p.scale, safeR / 2.2);
         const cR = Math.cos(s.theta), sR = Math.sin(s.theta);
@@ -1494,8 +1502,7 @@
       },
       tick(s, dt, p, m) { s.t += p.tDrift * m * dt; },
       draw(ctx, s, W, H, p) {
-        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
-        ctx.fillRect(0, 0, W, H);
+        multiplicativeFade(ctx, W, H, p.fade);
         const N = Math.min(Math.floor(p.particles), s.particles.length);
         const f = p.freq, t = s.t;
         ctx.strokeStyle = 'rgba(245, 240, 230, 0.18)';
