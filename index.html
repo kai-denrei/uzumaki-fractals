@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=d02cb5be">
+<link rel="manifest" href="./manifest.webmanifest?v=82c0cb02">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=d02cb5be">
+<link rel="apple-touch-icon" href="./icon.svg?v=82c0cb02">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=d02cb5be");
+    background-image: url("./noise.svg?v=82c0cb02");
   }
 
   body::after {
@@ -290,6 +290,41 @@
     border-top: 1px solid var(--bone-faint);
     display: flex;
     gap: 0.5rem;
+  }
+
+  /* ---------- Playback mode row ---------- */
+  .play-modes {
+    display: flex;
+    gap: 0.3rem;
+    margin: 0 0 1rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--bone-faint);
+  }
+  .play-mode-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--bone-faint);
+    color: var(--bone-dim);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.05rem;
+    letter-spacing: 0;
+    text-transform: none;
+    padding: 0.5rem 0.3rem 0.55rem;
+    line-height: 1;
+    min-height: 0;
+  }
+  .play-mode-btn:hover {
+    color: var(--cinnabar);
+    border-color: var(--cinnabar);
+    background: rgba(193,39,45,0.06);
+  }
+  .play-mode-btn.active {
+    color: var(--cinnabar);
+    border-color: var(--cinnabar);
+    background: rgba(193,39,45,0.14);
+    box-shadow: 0 0 12px rgba(193,39,45,0.25);
   }
 
   button {
@@ -710,9 +745,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="d02cb5be">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/16.svg?v=d02cb5be">
-  <script src="./cb-badge.js?v=d02cb5be" defer></script>
+  <meta name="cb" content="82c0cb02">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/02.svg?v=82c0cb02">
+  <script src="./cb-badge.js?v=82c0cb02" defer></script>
 </head>
 <body class="mode-v3">
   <canvas id="canvas"></canvas>
@@ -737,6 +772,12 @@
     <div class="controls-title">
       <span class="en">parameters</span>
       <span class="ja">変数</span>
+    </div>
+    <div class="play-modes" id="play-modes">
+      <button class="play-mode-btn"        data-mode="bounce"  type="button" title="bounce / oscillate" aria-label="bounce">⇄</button>
+      <button class="play-mode-btn active" data-mode="forward" type="button" title="forward"            aria-label="forward">→</button>
+      <button class="play-mode-btn"        data-mode="loop"    type="button" title="loop continuously"  aria-label="loop">↻</button>
+      <button class="play-mode-btn"        data-mode="drift"   type="button" title="drift · eased noise" aria-label="drift">⇢</button>
     </div>
     <div id="dynamic-sliders"></div>
     <div class="footer-actions">
@@ -789,6 +830,27 @@
     // ─────────────────────────── Helpers ───────────────────────────
     const rand = (a, b) => a + Math.random() * (b - a);
     const easeInOutQuad = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+
+    // Playback mode → speed multiplier. Each viz's tick gets this as a
+    // 4th arg and applies it to its main animated parameter.
+    let playMode = 'forward';
+    function modeRate(s, dt) {
+      s._modeT = (s._modeT || 0) + dt;
+      switch (playMode) {
+        case 'bounce': {
+          // smooth cosine oscillation: forward → reverse → forward, 12s period
+          return Math.cos(s._modeT * Math.PI / 6);
+        }
+        case 'drift': {
+          // eased noise: rate varies smoothly between ~0.1 and ~1.9
+          return 1 + 0.6 * Math.sin(s._modeT * 0.7) + 0.3 * Math.sin(s._modeT * 1.7 + 1);
+        }
+        case 'loop':
+        case 'forward':
+        default:
+          return 1;
+      }
+    }
 
     function fillBg(ctx, W, H) {
       ctx.fillStyle = '#050403';
@@ -915,7 +977,7 @@
         {key:'speed',   sym:'ω', label:'speed',   ja:'速', min:-0.00001, max:0.00001, step:0.00000001, value:0.000001,fmt:v=>v.toFixed(8)},
       ],
       setup(s) { s.phase = 0; },
-      tick(s, dt, p) { s.phase += p.speed * dt * 60; },
+      tick(s, dt, p, m) { s.phase += p.speed * m * dt * 60; },
       draw(ctx, s, W, H, p) {
         fillBg(ctx, W, H);
         drawUzumakiCurve(ctx, s, W, H, p, p.tmax);
@@ -938,8 +1000,8 @@
         {key:'growth',  sym:'γ', label:'grow · s',  ja:'芽', min:0.5,      max:60,      step:0.1,        value:8,       fmt:v=>v.toFixed(1)},
       ],
       setup(s) { s.phase = 0; s.growthT = 0; },
-      tick(s, dt, p) {
-        s.phase += p.speed * dt * 60;
+      tick(s, dt, p, m) {
+        s.phase += p.speed * m * dt * 60;
         if (s.growthT < p.tmax) {
           const rate = p.tmax / Math.max(0.1, p.growth);
           s.growthT = Math.min(p.tmax, s.growthT + rate * dt);
@@ -1000,8 +1062,8 @@
         s.driftSyncTimer = 0;
         pickV3Drift(s);
       },
-      tick(s, dt, p) {
-        s.phase += p.speed * dt * 60;
+      tick(s, dt, p, m) {
+        s.phase += p.speed * m * dt * 60;
         // drift
         s.driftElapsed += dt;
         const t = Math.min(1, s.driftElapsed / s.driftInterval);
@@ -1046,7 +1108,7 @@
         {key:'speed', sym:'ω', label:'ψ drift',  ja:'速', min:-0.01,  max:0.01,  step:0.00001, value:0.0008,  fmt:v=>v.toFixed(5)},
       ],
       setup(s) { s.drift = 0; },
-      tick(s, dt, p) { s.drift += p.speed * dt * 60; },
+      tick(s, dt, p, m) { s.drift += p.speed * m * dt * 60; },
       draw(ctx, s, W, H, p) {
         fillBg(ctx, W, H);
         const cx = W/2, cy = H/2;
@@ -1089,7 +1151,7 @@
         {key:'speed', sym:'ω', label:'d drift',ja:'速', min:-0.5, max:0.5,  step:0.001, value:0.05,fmt:v=>v.toFixed(3)},
       ],
       setup(s) { s.drift = 0; },
-      tick(s, dt, p) { s.drift += p.speed * dt; },
+      tick(s, dt, p, m) { s.drift += p.speed * m * dt; },
       draw(ctx, s, W, H, p) {
         fillBg(ctx, W, H);
         const cx = W/2, cy = H/2;
@@ -1127,7 +1189,7 @@
         {key:'speed', sym:'ω',  label:'m drift',  ja:'速', min:-0.5, max:0.5, step:0.001, value:0.05, fmt:v=>v.toFixed(3)},
       ],
       setup(s) { s.drift = 0; },
-      tick(s, dt, p) { s.drift += p.speed * dt; },
+      tick(s, dt, p, m) { s.drift += p.speed * m * dt; },
       draw(ctx, s, W, H, p) {
         fillBg(ctx, W, H);
         const cx = W/2, cy = H/2;
@@ -1162,7 +1224,7 @@
         {key:'speed', sym:'ω', label:'φ drift', ja:'速', min:-1, max:1,   step:0.001, value:0.15,     fmt:v=>v.toFixed(3)},
       ],
       setup(s) { s.phi = 0; },
-      tick(s, dt, p) { s.phi += p.speed * dt; },
+      tick(s, dt, p, m) { s.phi += p.speed * m * dt; },
       draw(ctx, s, W, H, p) {
         fillBg(ctx, W, H);
         const cx = W/2, cy = H/2;
@@ -1200,7 +1262,7 @@
         {key:'speed', sym:'ω',  label:'f₁ drift', ja:'速', min:-0.1, max:0.1,  step:0.0001, value:0.005, fmt:v=>v.toFixed(4)},
       ],
       setup(s) { s.drift = 0; },
-      tick(s, dt, p) { s.drift += p.speed * dt; },
+      tick(s, dt, p, m) { s.drift += p.speed * m * dt; },
       draw(ctx, s, W, H, p) {
         fillBg(ctx, W, H);
         const cx = W/2, cy = H/2;
@@ -1238,7 +1300,7 @@
         {key:'drift', sym:'ω', label:'param drift',ja:'速',min:0,    max:0.005,  step:0.00001, value:0.0006,fmt:v=>v.toFixed(5)},
       ],
       setup(s) { s.x = 0.1; s.y = 0.1; s.tdrift = 0; },
-      tick(s, dt, p) { s.tdrift += p.drift * dt; },
+      tick(s, dt, p, m) { s.tdrift += p.drift * m * dt; },
       draw(ctx, s, W, H, p) {
         const cx = W/2, cy = H/2;
         ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
@@ -1279,7 +1341,7 @@
         {key:'drift', sym:'ω', label:'param drift',ja:'速', min:0,    max:0.005,  step:0.00001, value:0.0005,fmt:v=>v.toFixed(5)},
       ],
       setup(s) { s.x = 0.1; s.y = 0.1; s.tdrift = 0; },
-      tick(s, dt, p) { s.tdrift += p.drift * dt; },
+      tick(s, dt, p, m) { s.tdrift += p.drift * m * dt; },
       draw(ctx, s, W, H, p) {
         const cx = W/2, cy = H/2;
         ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
@@ -1328,7 +1390,7 @@
         {key:'fade',  sym:'φ', label:'trail',      ja:'尾', min:0,    max:0.1,  step:0.001, value:0.01,  fmt:v=>v.toFixed(3)},
       ],
       setup(s) { s.x = 0.1; s.y = 0; s.z = 0; s.theta = 0; },
-      tick(s, dt, p) { s.theta += p.rot * dt; },
+      tick(s, dt, p, m) { s.theta += p.rot * m * dt; },
       draw(ctx, s, W, H, p) {
         const cx = W/2, cy = H/2;
         ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
@@ -1375,7 +1437,7 @@
         {key:'driftM', sym:'μ', label:'m drift', ja:'流', min:-0.3, max:0.3, step:0.001, value:0.03, fmt:v=>v.toFixed(3)},
       ],
       setup(s) { s.tN = 0; s.tM = 0; },
-      tick(s, dt, p) { s.tN += p.driftN * dt; s.tM += p.driftM * dt; },
+      tick(s, dt, p, m) { s.tN += p.driftN * m * dt; s.tM += p.driftM * m * dt; },
       draw(ctx, s, W, H, p) {
         fillBg(ctx, W, H);
         const g = Math.floor(p.grid);
@@ -1430,7 +1492,7 @@
           s.particles.push({ x: Math.random() * W, y: Math.random() * H });
         }
       },
-      tick(s, dt, p) { s.t += p.tDrift * dt; },
+      tick(s, dt, p, m) { s.t += p.tDrift * m * dt; },
       draw(ctx, s, W, H, p) {
         ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
         ctx.fillRect(0, 0, W, H);
@@ -1506,7 +1568,7 @@
         }
         s.driftF = 0;
       },
-      tick(s, dt, p) { s.driftF += p.driftF * dt; },
+      tick(s, dt, p, m) { s.driftF += p.driftF * m * dt; },
       draw(ctx, s, W, H, p) {
         const gx = s.gx, gy = s.gy;
         const F = p.F + s.driftF, K = p.K, Du = p.Du, Dv = p.Dv;
@@ -1635,7 +1697,10 @@
       const dt = Math.min(0.1, (tNow - lastFrameT) / 1000);
       lastFrameT = tNow;
       if (activeViz) {
-        if (!paused && activeViz.tick) activeViz.tick(stateMap[activeId], dt, currentParams);
+        if (!paused && activeViz.tick) {
+          const m = modeRate(stateMap[activeId], dt);
+          activeViz.tick(stateMap[activeId], dt, currentParams, m);
+        }
         activeViz.draw(ctx, stateMap[activeId], W, H, currentParams);
       }
       frameCount++;
@@ -1659,6 +1724,17 @@
     pauseBtn.addEventListener('click', () => {
       paused = !paused;
       pauseBtn.textContent = paused ? 'play' : 'pause';
+    });
+
+    // Playback-mode buttons
+    document.querySelectorAll('.play-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playMode = btn.dataset.mode;
+        document.querySelectorAll('.play-mode-btn').forEach(b =>
+          b.classList.toggle('active', b.dataset.mode === playMode));
+        // Reset the per-viz mode timer so the new mode starts cleanly
+        if (activeId && stateMap[activeId]) stateMap[activeId]._modeT = 0;
+      });
     });
 
 
