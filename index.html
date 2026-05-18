@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=9a3da241">
+<link rel="manifest" href="./manifest.webmanifest?v=3b157f31">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=9a3da241">
+<link rel="apple-touch-icon" href="./icon.svg?v=3b157f31">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=9a3da241");
+    background-image: url("./noise.svg?v=3b157f31");
   }
 
   body::after {
@@ -471,22 +471,32 @@
   /* dim sliders when sequencer drives them */
   body.sequencer-active .controls input[type="range"] { opacity: 0.55; }
 
-  /* ─────────────────── Game mode (V15 戯) ─────────────────── */
+  /* ─────────────────── Game modes (V15 戯, V16 型) ─────────────────── */
   .game-controls,
   .game-hud,
   .game-win {
     display: none;
   }
-  body.mode-game .game-controls { display: block; }
-  body.mode-game .game-hud      { display: block; }
+  body.mode-game .game-controls,
+  body.mode-match .game-controls { display: block; }
+  body.mode-game .game-hud,
+  body.mode-match .game-hud { display: block; }
   body.mode-game #dynamic-sliders,
+  body.mode-match #dynamic-sliders,
   body.mode-game .play-modes,
+  body.mode-match .play-modes,
   body.mode-game .presets,
+  body.mode-match .presets,
   body.mode-game .formula,
+  body.mode-match .formula,
   body.mode-game .romaji-stack .index,
-  body.mode-game .romaji-stack .subtitle { /* keep formula+desc clean during play */
+  body.mode-match .romaji-stack .index,
+  body.mode-game .romaji-stack .subtitle,
+  body.mode-match .romaji-stack .subtitle {
     display: none !important;
   }
+  /* match mode: hide gold target ticks — player navigates by visual match */
+  body.mode-match .kp-target { display: none; }
 
   .game-controls .game-instructions {
     font-family: 'IBM Plex Mono', monospace;
@@ -631,7 +641,8 @@
     user-select: none;
     pointer-events: none;
   }
-  body.mode-game .game-keypad { display: grid; }
+  body.mode-game .game-keypad,
+  body.mode-match .game-keypad { display: grid; }
   .kp-cell[data-k="w"] { grid-column: 2; grid-row: 1; }
   .kp-cell[data-k="a"] { grid-column: 1; grid-row: 2; }
   .kp-cell[data-k="d"] { grid-column: 3; grid-row: 2; }
@@ -727,7 +738,8 @@
     align-items: center;
     justify-content: center;
   }
-  body.mode-game .game-win:not([hidden]) { display: flex; }
+  body.mode-game .game-win:not([hidden]),
+  body.mode-match .game-win:not([hidden]) { display: flex; }
   .game-win-card {
     background: rgba(10, 9, 8, 0.96);
     border: 1px solid var(--bone-faint);
@@ -1202,9 +1214,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="9a3da241">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/26.svg?v=9a3da241">
-  <script src="./cb-badge.js?v=9a3da241" defer></script>
+  <meta name="cb" content="3b157f31">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/59.svg?v=3b157f31">
+  <script src="./cb-badge.js?v=3b157f31" defer></script>
 </head>
 <body>
   <canvas id="canvas"></canvas>
@@ -1238,7 +1250,7 @@
     </div>
     <div id="dynamic-sliders"></div>
     <div class="game-controls" id="game-controls">
-      <p class="game-instructions">
+      <p class="game-instructions" id="game-instructions">
         <b>Hold WASD</b> — each key pushes its parameter toward its calm value.
         Release and chaos drifts it away. Sustain <em>calmness ≥ 85%</em> for
         <em>3 seconds</em> to stabilize.
@@ -1279,13 +1291,13 @@
   <div class="game-hud" id="game-hud" aria-hidden="true">
     <div class="g-meter">
       <div class="g-meter-head">
-        <span class="g-kanji">静</span>
-        <span class="g-lbl">calmness</span>
+        <span class="g-kanji" id="hud-kanji">静</span>
+        <span class="g-lbl" id="hud-label">calmness</span>
         <span class="g-val" id="game-calm-val">0%</span>
       </div>
       <div class="calm-bar">
         <div class="calm-fill" id="calm-fill"></div>
-        <div class="calm-threshold"></div>
+        <div class="calm-threshold" id="calm-threshold"></div>
       </div>
     </div>
     <div class="g-stats">
@@ -2593,6 +2605,293 @@
     });
 
     // ════════════════════════════════════════════════════════════════════
+    // V16 · MATCH · 型 — replicate the shape
+    // ════════════════════════════════════════════════════════════════════
+    const MATCH_TARGET_RANGE = { a: [0.60, 1.30], d: [2.5, 4.3] };
+    const MATCH_PLAYER_RANGE = { a: [0.40, 1.45], d: [2.0, 4.6] };  // slightly wider so player can over/undershoot
+    const MATCH_FIXED  = { b: 0.7, c: 0.6, e: 0.25, f: 0.10, scale: 200, fade: 0.069, iter: 1500 };
+    const MATCH_KEY2DIR = { w: [+1, 'a'], s: [-1, 'a'], a: [-1, 'd'], d: [+1, 'd'] };
+    const MATCH_RATE = { a: 0.30, d: 0.65 };   // units per second held
+    const MATCH_BEST_KEY  = 'uzumaki-match-best-v1';
+    const MATCH_BINS      = 32;
+    const MATCH_RANGE     = 1.5;
+    const MATCH_WIN_THRESH  = 0.80;
+    const MATCH_WIN_SUSTAIN = 2.0;
+    const MATCH_GHOST_ITER  = 60000;
+    const MATCH_WARMUP_ITER = 1500;
+
+    function pickMatchTarget(curr) {
+      let a, d;
+      do {
+        a = rand(MATCH_TARGET_RANGE.a[0], MATCH_TARGET_RANGE.a[1]);
+        d = rand(MATCH_TARGET_RANGE.d[0], MATCH_TARGET_RANGE.d[1]);
+      } while (curr && Math.abs(a - curr.a) < 0.15 && Math.abs(d - curr.d) < 0.5);
+      return { a, d };
+    }
+
+    // Compute spatial histogram of an Aizawa attractor (32×32 in [-1.5, 1.5]²)
+    function buildMatchHistogram(a, d) {
+      const bins = MATCH_BINS;
+      const range = MATCH_RANGE;
+      const hist = new Float32Array(bins * bins);
+      const b = MATCH_FIXED.b, c = MATCH_FIXED.c, e = MATCH_FIXED.e, f = MATCH_FIXED.f;
+      const h = 0.01;
+      let x = 0.1, y = 0, z = 0;
+      // Warmup so we discard the transient
+      for (let i = 0; i < MATCH_WARMUP_ITER; i++) {
+        const dx = (z - b) * x - d * y;
+        const dy = d * x + (z - b) * y;
+        const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
+        x += dx * h; y += dy * h; z += dz * h;
+      }
+      for (let i = 0; i < MATCH_GHOST_ITER; i++) {
+        const dx = (z - b) * x - d * y;
+        const dy = d * x + (z - b) * y;
+        const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
+        x += dx * h; y += dy * h; z += dz * h;
+        if (Math.abs(x) >= range || Math.abs(y) >= range) continue;
+        const bx = ((x + range) * 0.5 / range * bins) | 0;
+        const by = ((y + range) * 0.5 / range * bins) | 0;
+        if (bx >= 0 && bx < bins && by >= 0 && by < bins) {
+          hist[by * bins + bx]++;
+        }
+      }
+      let sum = 0;
+      for (let i = 0; i < hist.length; i++) sum += hist[i];
+      if (sum > 0) for (let i = 0; i < hist.length; i++) hist[i] /= sum;
+      return hist;
+    }
+
+    // Pre-render target Aizawa onto an offscreen canvas in faint gold
+    function buildMatchGhost(a, d, W, H) {
+      const off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      const oc = off.getContext('2d');
+      const cx = W/2, cy = H/2;
+      const safeR = Math.min(W, H) * 0.44;
+      const sc = Math.min(MATCH_FIXED.scale, safeR / 2.2);
+      const b = MATCH_FIXED.b, c = MATCH_FIXED.c, e = MATCH_FIXED.e, f = MATCH_FIXED.f;
+      const h = 0.01;
+      let x = 0.1, y = 0, z = 0;
+      for (let i = 0; i < MATCH_WARMUP_ITER; i++) {
+        const dx = (z - b) * x - d * y;
+        const dy = d * x + (z - b) * y;
+        const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
+        x += dx * h; y += dy * h; z += dz * h;
+      }
+      oc.fillStyle = 'rgba(176, 141, 87, 0.20)';  // faint gold
+      for (let i = 0; i < MATCH_GHOST_ITER; i++) {
+        const dx = (z - b) * x - d * y;
+        const dy = d * x + (z - b) * y;
+        const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
+        x += dx * h; y += dy * h; z += dz * h;
+        oc.fillRect(cx + x * sc, cy + y * sc, 1, 1);
+      }
+      return off;
+    }
+
+    function histogramIntersection(h1, h2) {
+      let s = 0;
+      const n = Math.min(h1.length, h2.length);
+      for (let i = 0; i < n; i++) {
+        s += (h1[i] < h2[i]) ? h1[i] : h2[i];
+      }
+      return s;
+    }
+
+    function setMatchHudLabels() {
+      const k = document.getElementById('hud-kanji');
+      const l = document.getElementById('hud-label');
+      const t = document.getElementById('calm-threshold');
+      if (k) k.textContent = '型';
+      if (l) l.textContent = 'match';
+      if (t) t.style.left = (MATCH_WIN_THRESH * 100) + '%';
+      const instr = document.getElementById('game-instructions');
+      if (instr) instr.innerHTML =
+        '<b>WASD</b> navigates parameter space: W/S adjust <em>a</em>, A/D adjust <em>d</em>. ' +
+        'Match the gold ghost shape — bone covers gold when aligned. ' +
+        'Sustain <em>match ≥ 80%</em> for <em>2 seconds</em>.';
+    }
+
+    function updateMatchHUD(s) {
+      const calmEl  = document.getElementById('game-calm-val');
+      const calmFill = document.getElementById('calm-fill');
+      const timeEl  = document.getElementById('game-time');
+      const holdEl  = document.getElementById('game-hold');
+      const bestEl  = document.getElementById('game-best');
+      if (calmEl)  calmEl.textContent  = Math.round(s.matchScore * 100) + '%';
+      if (calmFill) calmFill.style.width = Math.max(0, Math.min(100, s.matchScore * 100)) + '%';
+      if (timeEl)  timeEl.textContent  = s.timer.toFixed(1) + 's';
+      if (holdEl)  holdEl.textContent  = s.matchSustained.toFixed(1) + 's';
+      if (bestEl) {
+        const best = parseFloat(localStorage.getItem(MATCH_BEST_KEY) || 'NaN');
+        bestEl.textContent = isFinite(best) ? best.toFixed(1) + 's' : '—';
+      }
+      // Keypad: W/S show param a, A/D show param d. No gold target tick (hidden via CSS).
+      for (const key of ['w','a','s','d']) {
+        const cell = document.querySelector(`.kp-cell[data-k="${key}"]`);
+        if (!cell) continue;
+        const [, param] = MATCH_KEY2DIR[key];
+        const value = s.gp[param];
+        const [lo, hi] = MATCH_PLAYER_RANGE[param];
+        const valFrac = Math.max(0, Math.min(1, (value - lo) / (hi - lo)));
+        cell.classList.toggle('active', !!s.keys[key]);
+        const dot = cell.querySelector('.kp-dot');
+        if (!dot) continue;
+        if (cell.classList.contains('kp-vert')) {
+          dot.style.top = (1 - valFrac) * 100 + '%';
+        } else {
+          dot.style.left = valFrac * 100 + '%';
+        }
+        // No wiggle in match mode — value moves deliberately via keys
+        dot.style.transform = `translate(-50%, -50%)`;
+        // Color cue: green when match is high, bone when neutral
+        const m = s.matchScore;
+        if (m > 0.6) {
+          // tint toward gold then cinnabar at very high match
+          const t = (m - 0.6) / 0.4;  // 0..1 over [0.6, 1.0]
+          const cr = (245 + (176 - 245) * t) | 0;
+          const cg = (240 + (141 - 240) * t) | 0;
+          const cb = (230 + ( 87 - 230) * t) | 0;
+          dot.style.background = `rgb(${cr},${cg},${cb})`;
+          dot.style.boxShadow = `0 0 ${(t * 8).toFixed(1)}px rgba(176, 141, 87, ${(t * 0.6).toFixed(2)})`;
+        } else {
+          dot.style.background = 'var(--bone)';
+          dot.style.boxShadow = 'none';
+        }
+      }
+    }
+
+    function initMatchGame(s, W, H) {
+      const target = pickMatchTarget(null);
+      s.target = target;
+      s.targetHist = buildMatchHistogram(target.a, target.d);
+      s.ghostCanvas = buildMatchGhost(target.a, target.d, W, H);
+      s.ghostSize = { W, H };
+      // Player starts at a sufficiently different position
+      let pa, pd;
+      do {
+        pa = rand(MATCH_PLAYER_RANGE.a[0], MATCH_PLAYER_RANGE.a[1]);
+        pd = rand(MATCH_PLAYER_RANGE.d[0], MATCH_PLAYER_RANGE.d[1]);
+      } while (Math.abs(pa - target.a) < 0.25 && Math.abs(pd - target.d) < 0.6);
+      s.gp = { a: pa, d: pd };
+      s.x = 0.1; s.y = 0; s.z = 0;
+      s.playerHist = new Float32Array(MATCH_BINS * MATCH_BINS);
+      s.matchScore = 0;
+      s.matchSustained = 0;
+      s.timer = 0;
+      s.won = false;
+      s.keys = { w: false, a: false, s: false, d: false };
+      hideWinOverlay();
+    }
+
+    VIZ.push({
+      id: 'match', ja: '型', short: 'V16',
+      subtitle: 'replicate · nº 16', index: '型 · match the shape',
+      formula:
+        _.eq(_.lbl('match · 型 · replicate the shape')) +
+        _.eq('hold ', _.v('W'), '/', _.v('S'), ' to nudge ', _.v('a'), '; ', _.v('A'), '/', _.v('D'), ' to nudge ', _.v('d'), '.') +
+        _.eq('match the ', _.g('gold ghost'), ' with your shape.'),
+      params: [],
+      setup(s, W, H) { initMatchGame(s, W, H); },
+      tick(s, dt, p, m) {
+        if (s.won) return;
+        s.timer += dt;
+
+        // Key inputs — constant nudge while held
+        for (const key of Object.keys(MATCH_KEY2DIR)) {
+          if (!s.keys[key]) continue;
+          const [sign, param] = MATCH_KEY2DIR[key];
+          const rate = MATCH_RATE[param];
+          const [lo, hi] = MATCH_PLAYER_RANGE[param];
+          s.gp[param] = Math.max(lo, Math.min(hi, s.gp[param] + sign * rate * dt));
+        }
+
+        // Compute match from last frame's player histogram
+        const inst = histogramIntersection(s.playerHist, s.targetHist);
+        // Smoothing so the bar reads cleanly
+        s.matchScore = s.matchScore * 0.82 + inst * 0.18;
+
+        // Win check
+        if (s.matchScore > MATCH_WIN_THRESH) {
+          s.matchSustained += dt;
+          if (s.matchSustained >= MATCH_WIN_SUSTAIN) {
+            s.won = true;
+            const prev = parseFloat(localStorage.getItem(MATCH_BEST_KEY) || 'NaN');
+            if (!isFinite(prev) || s.timer < prev) {
+              localStorage.setItem(MATCH_BEST_KEY, String(s.timer));
+            }
+            showMatchWinOverlay(s.timer);
+          }
+        } else {
+          s.matchSustained = Math.max(0, s.matchSustained - dt * 1.5);
+        }
+
+        updateMatchHUD(s);
+      },
+      draw(ctx, s, W, H, p) {
+        // Resize ghost canvas if window dimensions changed
+        if (!s.ghostSize || s.ghostSize.W !== W || s.ghostSize.H !== H) {
+          s.ghostCanvas = buildMatchGhost(s.target.a, s.target.d, W, H);
+          s.ghostSize = { W, H };
+        }
+
+        const cx = W/2, cy = H/2;
+        multiplicativeFade(ctx, W, H, MATCH_FIXED.fade);
+
+        // Draw the gold ghost first
+        if (s.ghostCanvas) ctx.drawImage(s.ghostCanvas, 0, 0);
+
+        // Iterate player and plot bone, building histogram in the same loop
+        const safeR = Math.min(W, H) * 0.44;
+        const sc = Math.min(MATCH_FIXED.scale, safeR / 2.2);
+        const hh = 0.01;
+        const a = s.gp.a, d = s.gp.d;
+        const b = MATCH_FIXED.b, c = MATCH_FIXED.c, e = MATCH_FIXED.e, f = MATCH_FIXED.f;
+        const N = MATCH_FIXED.iter;
+        const bins = MATCH_BINS;
+        const range = MATCH_RANGE;
+        let x = s.x, y = s.y, z = s.z;
+        const hist = s.playerHist;
+        hist.fill(0);
+        let histSum = 0;
+        ctx.fillStyle = 'rgba(245, 240, 230, 0.4)';
+        for (let i = 0; i < N; i++) {
+          const dx = (z - b) * x - d * y;
+          const dy = d * x + (z - b) * y;
+          const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
+          x += dx * hh; y += dy * hh; z += dz * hh;
+          ctx.fillRect(cx + x * sc, cy + y * sc, 1, 1);
+          if (Math.abs(x) < range && Math.abs(y) < range) {
+            const bx = ((x + range) * 0.5 / range * bins) | 0;
+            const by = ((y + range) * 0.5 / range * bins) | 0;
+            if (bx >= 0 && bx < bins && by >= 0 && by < bins) {
+              hist[by * bins + bx]++;
+              histSum++;
+            }
+          }
+        }
+        if (histSum > 0) {
+          const inv = 1 / histSum;
+          for (let i = 0; i < hist.length; i++) hist[i] *= inv;
+        }
+        s.x = x; s.y = y; s.z = z;
+      },
+    });
+
+    function showMatchWinOverlay(time) {
+      const o = document.getElementById('game-win');
+      const t = document.getElementById('win-time');
+      const b = document.getElementById('win-best');
+      if (o) o.hidden = false;
+      if (t) t.textContent = time.toFixed(1) + 's';
+      if (b) {
+        const best = parseFloat(localStorage.getItem(MATCH_BEST_KEY) || 'NaN');
+        b.textContent = isFinite(best) && best <= time + 0.05 ? 'new best · 新記録' : (isFinite(best) ? `best · ${best.toFixed(1)}s` : '');
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
     // FRAMEWORK
     // ════════════════════════════════════════════════════════════════════
     let activeViz = null;
@@ -2669,9 +2968,25 @@
       });
       // V3 drift mode dims its sliders (they're under autonomous control)
       document.body.classList.toggle('mode-v3', vizId === 'v3');
-      // V15 game mode hides regular sliders, shows HUD + key indicators
-      document.body.classList.toggle('mode-game', vizId === 'game');
-      if (vizId !== 'game') hideWinOverlay();
+      // V15 game / V16 match modes hide regular sliders, show HUD + cross keypad
+      document.body.classList.toggle('mode-game',  vizId === 'game');
+      document.body.classList.toggle('mode-match', vizId === 'match');
+      if (vizId !== 'game' && vizId !== 'match') hideWinOverlay();
+      else hideWinOverlay();   // also hide between rounds
+      // Swap HUD labels per game viz
+      if (vizId === 'game') {
+        document.getElementById('hud-kanji').textContent = '静';
+        document.getElementById('hud-label').textContent = 'calmness';
+        const thr = document.getElementById('calm-threshold');
+        if (thr) thr.style.left = (GAME_WIN_THRESH * 100) + '%';
+        const instr = document.getElementById('game-instructions');
+        if (instr) instr.innerHTML =
+          '<b>Hold WASD</b> — each key pushes its parameter toward its calm value. ' +
+          'Release and chaos drifts it away. Sustain <em>calmness ≥ 85%</em> for ' +
+          '<em>3 seconds</em> to stabilize.';
+      } else if (vizId === 'match') {
+        setMatchHudLabels();
+      }
       document.getElementById('subtitle').textContent = viz.subtitle;
       document.getElementById('index').textContent    = viz.index;
       document.getElementById('formula').innerHTML    = viz.formula || '';
@@ -2735,38 +3050,38 @@
     document.getElementById('preset-play').addEventListener('click', () => setSequencer(!seqActive));
     document.getElementById('preset-copy').addEventListener('click', copyPresetsCSV);
 
-    // ── V15 game keys + buttons ──────────────────────────────────────
+    // ── V15 / V16 game keys + buttons ────────────────────────────────
     function gameSetKey(k, down) {
-      if (activeId !== 'game' || !stateMap.game) return false;
+      const id = (activeId === 'game' || activeId === 'match') ? activeId : null;
+      if (!id || !stateMap[id]) return false;
       const lower = k.toLowerCase();
-      if (lower in stateMap.game.keys) {
-        stateMap.game.keys[lower] = down;
+      if (lower in stateMap[id].keys) {
+        stateMap[id].keys[lower] = down;
         return true;
       }
       return false;
     }
     window.addEventListener('keydown', e => {
       if (e.repeat) return;
-      // Don't capture if user is typing in a form control
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
       if (gameSetKey(e.key, true)) e.preventDefault();
     });
     window.addEventListener('keyup', e => {
       if (gameSetKey(e.key, false)) e.preventDefault();
     });
-    // Releasing all keys on blur prevents stuck-key state
     window.addEventListener('blur', () => {
-      if (stateMap.game) for (const k of Object.keys(stateMap.game.keys)) stateMap.game.keys[k] = false;
+      for (const id of ['game', 'match']) {
+        if (stateMap[id]) for (const k of Object.keys(stateMap[id].keys)) stateMap[id].keys[k] = false;
+      }
     });
 
+    function restartActiveGame() {
+      if (activeId === 'game' || activeId === 'match') activate(activeId);
+    }
     const gameRandomBtn = document.getElementById('game-randomize');
-    if (gameRandomBtn) gameRandomBtn.addEventListener('click', () => {
-      if (activeId === 'game') activate('game');  // re-runs setup
-    });
+    if (gameRandomBtn) gameRandomBtn.addEventListener('click', restartActiveGame);
     const winRestartBtn = document.getElementById('win-restart');
-    if (winRestartBtn) winRestartBtn.addEventListener('click', () => {
-      if (activeId === 'game') activate('game');
-    });
+    if (winRestartBtn) winRestartBtn.addEventListener('click', restartActiveGame);
     const durSlider = document.getElementById('preset-dur');
     const durVal    = document.getElementById('preset-dur-val');
     if (durSlider && durVal) {
