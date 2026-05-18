@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=804376c5">
+<link rel="manifest" href="./manifest.webmanifest?v=32fe9ed4">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=804376c5">
+<link rel="apple-touch-icon" href="./icon.svg?v=32fe9ed4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=804376c5");
+    background-image: url("./noise.svg?v=32fe9ed4");
   }
 
   body::after {
@@ -471,6 +471,260 @@
   /* dim sliders when sequencer drives them */
   body.sequencer-active .controls input[type="range"] { opacity: 0.55; }
 
+  /* ─────────────────── Game mode (V15 戯) ─────────────────── */
+  .game-controls,
+  .game-hud,
+  .game-win {
+    display: none;
+  }
+  body.mode-game .game-controls { display: block; }
+  body.mode-game .game-hud      { display: block; }
+  body.mode-game #dynamic-sliders,
+  body.mode-game .play-modes,
+  body.mode-game .presets,
+  body.mode-game .formula,
+  body.mode-game .romaji-stack .index,
+  body.mode-game .romaji-stack .subtitle { /* keep formula+desc clean during play */
+    display: none !important;
+  }
+
+  .game-controls .game-instructions {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    line-height: 1.65;
+    color: var(--bone-dim);
+    letter-spacing: 0.04em;
+    margin: 0 0 0.85rem;
+  }
+  .game-controls .game-instructions b { color: var(--bone); font-weight: 500; }
+  .game-controls .game-instructions em {
+    font-style: italic;
+    color: var(--cinnabar);
+  }
+  .game-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--bone-faint);
+    color: var(--bone-dim);
+    padding: 0.65rem 0.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .game-btn:hover {
+    color: var(--cinnabar);
+    border-color: var(--cinnabar);
+    background: rgba(193, 39, 45, 0.06);
+  }
+  .game-btn.primary {
+    background: var(--cinnabar);
+    color: var(--bone);
+    border-color: var(--cinnabar);
+  }
+  .game-btn.primary:hover {
+    background: rgba(193, 39, 45, 0.85);
+  }
+
+  /* HUD overlay — top center */
+  .game-hud {
+    position: fixed;
+    top: 5.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9;
+    width: min(580px, calc(100vw - 4rem));
+    padding: 0.9rem 1.25rem 1rem;
+    background: rgba(8, 7, 6, 0.78);
+    backdrop-filter: blur(10px) saturate(1.1);
+    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    border: 1px solid var(--bone-faint);
+    border-top: 2px solid var(--cinnabar);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+    font-family: 'IBM Plex Mono', monospace;
+    user-select: none;
+  }
+  .g-meter { margin-bottom: 0.65rem; }
+  .g-meter-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    margin-bottom: 0.45rem;
+  }
+  .g-meter-head .g-kanji {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    color: var(--cinnabar);
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+  .g-meter-head .g-lbl {
+    font-size: 0.58rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+    flex: 1;
+  }
+  .g-meter-head .g-val {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--bone);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+  .calm-bar {
+    position: relative;
+    height: 6px;
+    background: var(--bone-trace);
+    overflow: hidden;
+  }
+  .calm-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0%;
+    background: linear-gradient(to right,
+      #6b1118  0%,
+      var(--cinnabar) 50%,
+      var(--gold) 80%,
+      var(--bone) 100%);
+    transition: width 0.08s linear;
+    box-shadow: 0 0 12px rgba(193, 39, 45, 0.5);
+  }
+  .calm-threshold {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: 85%;
+    width: 1px;
+    background: var(--gold);
+    box-shadow: 0 0 6px rgba(176, 141, 87, 0.8);
+  }
+  .g-stats {
+    display: flex;
+    gap: 1.1rem;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  .g-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+  }
+  .g-stat .lbl { color: var(--bone-faint); }
+  .g-stat .v   { color: var(--bone); font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+  .g-keys {
+    display: flex;
+    gap: 0.45rem;
+    justify-content: space-between;
+  }
+  .gk {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.45rem;
+    border: 1px solid var(--bone-faint);
+    background: rgba(245, 240, 230, 0.02);
+    transition: all 0.1s;
+    font-size: 0.65rem;
+  }
+  .gk kbd {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    background: transparent;
+    border: 0;
+    color: var(--bone-dim);
+    padding: 0;
+  }
+  .gk .par {
+    font-family: 'STIX Two Text', serif;
+    color: var(--gold);
+    font-size: 0.78rem;
+  }
+  .gk.active {
+    background: rgba(193, 39, 45, 0.18);
+    border-color: var(--cinnabar);
+    box-shadow: 0 0 10px rgba(193, 39, 45, 0.4);
+  }
+  .gk.active kbd { color: var(--bone); }
+  .gk.active .par { color: var(--cinnabar); }
+
+  /* Win overlay */
+  .game-win {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(5, 4, 3, 0.78);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    align-items: center;
+    justify-content: center;
+  }
+  body.mode-game .game-win:not([hidden]) { display: flex; }
+  .game-win-card {
+    background: rgba(10, 9, 8, 0.96);
+    border: 1px solid var(--bone-faint);
+    border-left: 2px solid var(--cinnabar);
+    padding: 2.5rem 3rem 2.2rem;
+    text-align: center;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+    min-width: min(360px, 90vw);
+  }
+  .game-win-kanji {
+    font-family: 'Shippori Mincho B1', serif;
+    font-weight: 800;
+    font-size: 4.5rem;
+    color: var(--cinnabar);
+    line-height: 1;
+    margin-bottom: 0.7rem;
+    text-shadow: 0 0 40px rgba(193, 39, 45, 0.45);
+  }
+  .game-win h2 {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.1rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+    margin: 0 0 1.2rem;
+  }
+  .game-win-time {
+    font-family: 'STIX Two Text', serif;
+    font-size: 2.2rem;
+    font-weight: 500;
+    color: var(--bone);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 0.4rem;
+  }
+  .game-win-best {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--bone-faint);
+    margin-bottom: 1.8rem;
+    min-height: 1rem;
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .game-hud {
+      top: 4.5rem;
+      padding: 0.7rem 0.9rem 0.85rem;
+    }
+    .g-stats { gap: 0.7rem; }
+    .gk { padding: 0.45rem 0.3rem; font-size: 0.6rem; }
+  }
+
   button {
     flex: 1;
     background: transparent;
@@ -889,9 +1143,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="804376c5">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/00.svg?v=804376c5">
-  <script src="./cb-badge.js?v=804376c5" defer></script>
+  <meta name="cb" content="32fe9ed4">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/50.svg?v=32fe9ed4">
+  <script src="./cb-badge.js?v=32fe9ed4" defer></script>
 </head>
 <body>
   <canvas id="canvas"></canvas>
@@ -924,6 +1178,14 @@
       <button class="play-mode-btn"        data-mode="drift"   type="button" title="drift · eased noise" aria-label="drift">⇢</button>
     </div>
     <div id="dynamic-sliders"></div>
+    <div class="game-controls" id="game-controls">
+      <p class="game-instructions">
+        <b>Hold WASD</b> — each key pushes its parameter toward its calm value.
+        Release and chaos drifts it away. Sustain <em>calmness ≥ 85%</em> for
+        <em>3 seconds</em> to stabilize.
+      </p>
+      <button class="game-btn" id="game-randomize" type="button">randomize start</button>
+    </div>
     <div class="presets">
       <div class="presets-title">
         <span class="en">presets</span>
@@ -952,6 +1214,43 @@
     <div><b>fps</b><span id="fps">—</span></div>
     <div><b>active</b><span id="active-name">—</span></div>
     <div><b>渦</b>animate<span class="live"></span></div>
+  </div>
+
+  <!-- Game mode HUD (top center, visible only when V15 active) -->
+  <div class="game-hud" id="game-hud" aria-hidden="true">
+    <div class="g-meter">
+      <div class="g-meter-head">
+        <span class="g-kanji">静</span>
+        <span class="g-lbl">calmness</span>
+        <span class="g-val" id="game-calm-val">0%</span>
+      </div>
+      <div class="calm-bar">
+        <div class="calm-fill" id="calm-fill"></div>
+        <div class="calm-threshold"></div>
+      </div>
+    </div>
+    <div class="g-stats">
+      <div class="g-stat"><span class="lbl">time</span><span class="v" id="game-time">0.0s</span></div>
+      <div class="g-stat"><span class="lbl">hold</span><span class="v" id="game-hold">0.0s</span></div>
+      <div class="g-stat"><span class="lbl">best</span><span class="v" id="game-best">—</span></div>
+    </div>
+    <div class="g-keys">
+      <div class="gk" data-k="w"><kbd>W</kbd><span class="par"><i>a</i></span></div>
+      <div class="gk" data-k="a"><kbd>A</kbd><span class="par"><i>b</i></span></div>
+      <div class="gk" data-k="s"><kbd>S</kbd><span class="par"><i>c</i></span></div>
+      <div class="gk" data-k="d"><kbd>D</kbd><span class="par"><i>d</i></span></div>
+    </div>
+  </div>
+
+  <!-- Win overlay -->
+  <div class="game-win" id="game-win" hidden>
+    <div class="game-win-card">
+      <div class="game-win-kanji">静</div>
+      <h2>stabilized</h2>
+      <div class="game-win-time" id="win-time">0.0s</div>
+      <div class="game-win-best" id="win-best"></div>
+      <button class="game-btn primary" id="win-restart" type="button">play again</button>
+    </div>
   </div>
 
   <div class="code-modal" id="code-modal" role="dialog" aria-modal="true" aria-label="source code">
@@ -1990,6 +2289,178 @@
     });
 
     // ════════════════════════════════════════════════════════════════════
+    // V15 · GAME · 戯 — stabilize the chaos
+    // ════════════════════════════════════════════════════════════════════
+    const GAME_TARGET = { a: 0.95, b: 0.93, c: 0.60, d: 3.50 };
+    const GAME_FIXED  = { e: 0.25, f: 0.10, scale: 200, rot: 0.05, iter: 1500, fade: 0.069 };
+    const GAME_BOUNDS = { a: [0.1, 1.5], b: [0.1, 1.5], c: [0.1, 1.5], d: [1, 5] };
+    const GAME_KEY2PARAM = { w: 'a', a: 'b', s: 'c', d: 'd' };
+    const GAME_BEST_KEY = 'uzumaki-game-best-v1';
+    const GAME_PULL_RATE  = 0.5;   // exponential pull strength per second (key held)
+    const GAME_CHAOS_RATE = 0.08;  // fraction of range per second (key released)
+    const GAME_WIN_THRESH = 0.85;
+    const GAME_WIN_SUSTAIN = 3;    // seconds above threshold to win
+    const GAME_HISTORY = 600;
+
+    function randomizeGameStart(s) {
+      s.gp = {};
+      for (const k of ['a','b','c','d']) {
+        const tgt = GAME_TARGET[k];
+        const [lo, hi] = GAME_BOUNDS[k];
+        const range = hi - lo;
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        const off = dir * range * (0.25 + Math.random() * 0.30);
+        s.gp[k] = Math.max(lo + 0.02, Math.min(hi - 0.02, tgt + off));
+      }
+      s.x = 0.1; s.y = 0; s.z = 0;
+      s.theta = 0;
+      s.history = [];
+      s.calmness = 0;
+      s.calmSustained = 0;
+      s.timer = 0;
+      s.won = false;
+      s.keys = { w: false, a: false, s: false, d: false };
+      hideWinOverlay();
+    }
+
+    function gameTickLogic(s, dt) {
+      if (s.won) return;
+      s.timer += dt;
+
+      // Per-key parameter dynamics
+      for (const key of Object.keys(GAME_KEY2PARAM)) {
+        const param = GAME_KEY2PARAM[key];
+        const tgt = GAME_TARGET[param];
+        const [lo, hi] = GAME_BOUNDS[param];
+        let v = s.gp[param];
+        if (s.keys[key]) {
+          // Exponential approach: half-life ≈ 1/PULL_RATE / ln(2)
+          v += (tgt - v) * Math.min(1, GAME_PULL_RATE * dt);
+        } else {
+          // Random walk biased AWAY from target
+          const awayDir = (v >= tgt) ? 1 : -1;
+          const range = hi - lo;
+          v += awayDir * range * GAME_CHAOS_RATE * dt * (0.4 + 0.8 * Math.random());
+        }
+        s.gp[param] = Math.max(lo, Math.min(hi, v));
+      }
+
+      // Calmness: coefficient of variation of |r| from centroid over history window
+      if (s.history.length >= 90) {
+        const n = s.history.length;
+        let mx = 0, my = 0, mz = 0;
+        for (let i = 0; i < n; i++) { mx += s.history[i].x; my += s.history[i].y; mz += s.history[i].z; }
+        mx /= n; my /= n; mz /= n;
+        let rSum = 0;
+        const rs = new Array(n);
+        for (let i = 0; i < n; i++) {
+          const p = s.history[i];
+          const r = Math.hypot(p.x - mx, p.y - my, p.z - mz);
+          rs[i] = r; rSum += r;
+        }
+        const rMean = rSum / n;
+        let varSum = 0;
+        for (let i = 0; i < n; i++) varSum += (rs[i] - rMean) * (rs[i] - rMean);
+        const rVar = varSum / n;
+        const cv2 = rVar / Math.max(0.0001, rMean * rMean);
+        s.calmness = 1 / (1 + 6 * cv2);
+      }
+
+      // Win check
+      if (s.calmness > GAME_WIN_THRESH) {
+        s.calmSustained += dt;
+        if (s.calmSustained >= GAME_WIN_SUSTAIN) {
+          s.won = true;
+          const prev = parseFloat(localStorage.getItem(GAME_BEST_KEY) || 'NaN');
+          if (!isFinite(prev) || s.timer < prev) {
+            localStorage.setItem(GAME_BEST_KEY, String(s.timer));
+          }
+          showWinOverlay(s.timer);
+        }
+      } else {
+        s.calmSustained = Math.max(0, s.calmSustained - dt * 1.5);
+      }
+
+      // Theta rotation (matches V11)
+      s.theta += GAME_FIXED.rot * dt;
+
+      updateGameHUD(s);
+    }
+
+    function updateGameHUD(s) {
+      const calmEl = document.getElementById('game-calm-val');
+      const calmFill = document.getElementById('calm-fill');
+      const timeEl = document.getElementById('game-time');
+      const holdEl = document.getElementById('game-hold');
+      const bestEl = document.getElementById('game-best');
+      if (calmEl)  calmEl.textContent  = Math.round(s.calmness * 100) + '%';
+      if (calmFill) calmFill.style.width = Math.max(0, Math.min(100, s.calmness * 100)) + '%';
+      if (timeEl)  timeEl.textContent  = s.timer.toFixed(1) + 's';
+      if (holdEl)  holdEl.textContent  = s.calmSustained.toFixed(1) + 's';
+      if (bestEl) {
+        const best = parseFloat(localStorage.getItem(GAME_BEST_KEY) || 'NaN');
+        bestEl.textContent = isFinite(best) ? best.toFixed(1) + 's' : '—';
+      }
+      for (const k of ['w','a','s','d']) {
+        const el = document.querySelector(`.gk[data-k="${k}"]`);
+        if (el) el.classList.toggle('active', !!s.keys[k]);
+      }
+    }
+
+    function showWinOverlay(time) {
+      const o = document.getElementById('game-win');
+      const t = document.getElementById('win-time');
+      const b = document.getElementById('win-best');
+      if (o) o.hidden = false;
+      if (t) t.textContent = time.toFixed(1) + 's';
+      if (b) {
+        const best = parseFloat(localStorage.getItem(GAME_BEST_KEY) || 'NaN');
+        b.textContent = isFinite(best) && best <= time + 0.05 ? 'new best · 新記録' : (isFinite(best) ? `best · ${best.toFixed(1)}s` : '');
+      }
+    }
+    function hideWinOverlay() {
+      const o = document.getElementById('game-win');
+      if (o) o.hidden = true;
+    }
+
+    VIZ.push({
+      id: 'game', ja: '戯', short: 'V15',
+      subtitle: 'game · nº 15', index: '戯 · stabilize the chaos',
+      formula:
+        _.eq(_.lbl('game · 戯 · stabilize the chaos')) +
+        _.eq('hold ', _.v('W'), '/', _.v('A'), '/', _.v('S'), '/', _.v('D'),
+             ' to push ', _.v('a'), ',', _.v('b'), ',', _.v('c'), ',', _.v('d'), ' toward ', _.g('calm'), '.'),
+      params: [],   // controls are simplified — no sliders
+      setup(s) { randomizeGameStart(s); },
+      tick(s, dt, p, m) { gameTickLogic(s, dt); },
+      draw(ctx, s, W, H, p) {
+        const cx = W/2, cy = H/2;
+        multiplicativeFade(ctx, W, H, GAME_FIXED.fade);
+        const safeR = Math.min(W, H) * 0.44;
+        const sc = Math.min(GAME_FIXED.scale, safeR / 2.2);
+        const cR = Math.cos(s.theta), sR = Math.sin(s.theta);
+        let x = s.x, y = s.y, z = s.z;
+        const a = s.gp.a, b = s.gp.b, c = s.gp.c, d = s.gp.d;
+        const e = GAME_FIXED.e, f = GAME_FIXED.f;
+        const h = 0.01;
+        const N = GAME_FIXED.iter;
+        ctx.fillStyle = 'rgba(245, 240, 230, 0.4)';
+        for (let i = 0; i < N; i++) {
+          const dx = (z - b) * x - d * y;
+          const dy = d * x + (z - b) * y;
+          const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
+          x += dx * h; y += dy * h; z += dz * h;
+          const xr = x * cR + z * sR;
+          ctx.fillRect(cx + xr * sc, cy + y * sc, 1, 1);
+        }
+        s.x = x; s.y = y; s.z = z;
+        // Sample one point per frame into the history buffer
+        s.history.push({ x, y, z });
+        if (s.history.length > GAME_HISTORY) s.history.shift();
+      },
+    });
+
+    // ════════════════════════════════════════════════════════════════════
     // FRAMEWORK
     // ════════════════════════════════════════════════════════════════════
     let activeViz = null;
@@ -2066,6 +2537,9 @@
       });
       // V3 drift mode dims its sliders (they're under autonomous control)
       document.body.classList.toggle('mode-v3', vizId === 'v3');
+      // V15 game mode hides regular sliders, shows HUD + key indicators
+      document.body.classList.toggle('mode-game', vizId === 'game');
+      if (vizId !== 'game') hideWinOverlay();
       document.getElementById('subtitle').textContent = viz.subtitle;
       document.getElementById('index').textContent    = viz.index;
       document.getElementById('formula').innerHTML    = viz.formula || '';
@@ -2128,6 +2602,39 @@
     document.getElementById('preset-save').addEventListener('click', savePreset);
     document.getElementById('preset-play').addEventListener('click', () => setSequencer(!seqActive));
     document.getElementById('preset-copy').addEventListener('click', copyPresetsCSV);
+
+    // ── V15 game keys + buttons ──────────────────────────────────────
+    function gameSetKey(k, down) {
+      if (activeId !== 'game' || !stateMap.game) return false;
+      const lower = k.toLowerCase();
+      if (lower in stateMap.game.keys) {
+        stateMap.game.keys[lower] = down;
+        return true;
+      }
+      return false;
+    }
+    window.addEventListener('keydown', e => {
+      if (e.repeat) return;
+      // Don't capture if user is typing in a form control
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+      if (gameSetKey(e.key, true)) e.preventDefault();
+    });
+    window.addEventListener('keyup', e => {
+      if (gameSetKey(e.key, false)) e.preventDefault();
+    });
+    // Releasing all keys on blur prevents stuck-key state
+    window.addEventListener('blur', () => {
+      if (stateMap.game) for (const k of Object.keys(stateMap.game.keys)) stateMap.game.keys[k] = false;
+    });
+
+    const gameRandomBtn = document.getElementById('game-randomize');
+    if (gameRandomBtn) gameRandomBtn.addEventListener('click', () => {
+      if (activeId === 'game') activate('game');  // re-runs setup
+    });
+    const winRestartBtn = document.getElementById('win-restart');
+    if (winRestartBtn) winRestartBtn.addEventListener('click', () => {
+      if (activeId === 'game') activate('game');
+    });
     const durSlider = document.getElementById('preset-dur');
     const durVal    = document.getElementById('preset-dur-val');
     if (durSlider && durVal) {
