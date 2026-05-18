@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=3b157f31">
+<link rel="manifest" href="./manifest.webmanifest?v=527a2ecc">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=3b157f31">
+<link rel="apple-touch-icon" href="./icon.svg?v=527a2ecc">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=3b157f31");
+    background-image: url("./noise.svg?v=527a2ecc");
   }
 
   body::after {
@@ -497,6 +497,38 @@
   }
   /* match mode: hide gold target ticks — player navigates by visual match */
   body.mode-match .kp-target { display: none; }
+
+  /* Target preview pane (V16 only) */
+  .match-preview { display: none; }
+  body.mode-match .match-preview { display: block; margin-bottom: 1.1rem; }
+  .match-preview-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    margin-bottom: 0.5rem;
+  }
+  .match-preview-head .ja {
+    font-family: 'Shippori Mincho B1', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--cinnabar);
+    line-height: 1;
+  }
+  .match-preview-head .en {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+  }
+  #match-preview-canvas {
+    display: block;
+    margin: 0 auto;
+    background: var(--void);
+    border: 1px solid var(--bone-faint);
+    border-left: 2px solid var(--gold);
+    box-shadow: 0 0 18px rgba(176, 141, 87, 0.18);
+  }
 
   .game-controls .game-instructions {
     font-family: 'IBM Plex Mono', monospace;
@@ -1214,9 +1246,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="3b157f31">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/59.svg?v=3b157f31">
-  <script src="./cb-badge.js?v=3b157f31" defer></script>
+  <meta name="cb" content="527a2ecc">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/18.svg?v=527a2ecc">
+  <script src="./cb-badge.js?v=527a2ecc" defer></script>
 </head>
 <body>
   <canvas id="canvas"></canvas>
@@ -1241,6 +1273,13 @@
     <div class="controls-title">
       <span class="en">parameters</span>
       <span class="ja">変数</span>
+    </div>
+    <div class="match-preview" id="match-preview">
+      <div class="match-preview-head">
+        <span class="ja">型</span>
+        <span class="en">target shape</span>
+      </div>
+      <canvas id="match-preview-canvas"></canvas>
     </div>
     <div class="play-modes" id="play-modes">
       <button class="play-mode-btn"        data-mode="bounce"  type="button" title="bounce / oscillate" aria-label="bounce">⇄</button>
@@ -2629,65 +2668,66 @@
       return { a, d };
     }
 
-    // Compute spatial histogram of an Aizawa attractor (32×32 in [-1.5, 1.5]²)
-    function buildMatchHistogram(a, d) {
+    // Single pass: render target Aizawa into the visible preview canvas
+    // AND build the 32×32 spatial histogram used for match scoring.
+    // Returns the normalized histogram.
+    const MATCH_PREVIEW_SIZE = 200;
+    function renderTargetAndHistogram(a, d) {
+      // Preview canvas (visible — sits at the top of the controls panel)
+      const previewCanvas = document.getElementById('match-preview-canvas');
+      let pctx = null, cx = 0, cy = 0, sc = 0;
+      const PS = MATCH_PREVIEW_SIZE;
+      if (previewCanvas) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        previewCanvas.width  = PS * dpr;
+        previewCanvas.height = PS * dpr;
+        previewCanvas.style.width  = PS + 'px';
+        previewCanvas.style.height = PS + 'px';
+        pctx = previewCanvas.getContext('2d');
+        pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        pctx.fillStyle = '#050403';
+        pctx.fillRect(0, 0, PS, PS);
+        cx = PS / 2; cy = PS / 2;
+        const safeR = PS * 0.44;
+        sc = Math.min(MATCH_FIXED.scale, safeR / 2.2);
+        pctx.fillStyle = 'rgba(176, 141, 87, 0.42)';
+      }
+
       const bins = MATCH_BINS;
       const range = MATCH_RANGE;
       const hist = new Float32Array(bins * bins);
       const b = MATCH_FIXED.b, c = MATCH_FIXED.c, e = MATCH_FIXED.e, f = MATCH_FIXED.f;
       const h = 0.01;
       let x = 0.1, y = 0, z = 0;
-      // Warmup so we discard the transient
+
+      // Warmup (discard transient)
       for (let i = 0; i < MATCH_WARMUP_ITER; i++) {
         const dx = (z - b) * x - d * y;
         const dy = d * x + (z - b) * y;
         const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
         x += dx * h; y += dy * h; z += dz * h;
       }
-      for (let i = 0; i < MATCH_GHOST_ITER; i++) {
+
+      // Main pass: render to preview + populate histogram
+      const N = MATCH_GHOST_ITER;
+      for (let i = 0; i < N; i++) {
         const dx = (z - b) * x - d * y;
         const dy = d * x + (z - b) * y;
         const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
         x += dx * h; y += dy * h; z += dz * h;
-        if (Math.abs(x) >= range || Math.abs(y) >= range) continue;
-        const bx = ((x + range) * 0.5 / range * bins) | 0;
-        const by = ((y + range) * 0.5 / range * bins) | 0;
-        if (bx >= 0 && bx < bins && by >= 0 && by < bins) {
-          hist[by * bins + bx]++;
+        if (Math.abs(x) < range && Math.abs(y) < range) {
+          const bx = ((x + range) * 0.5 / range * bins) | 0;
+          const by = ((y + range) * 0.5 / range * bins) | 0;
+          if (bx >= 0 && bx < bins && by >= 0 && by < bins) {
+            hist[by * bins + bx]++;
+          }
         }
+        if (pctx) pctx.fillRect(cx + x * sc, cy + y * sc, 1, 1);
       }
       let sum = 0;
       for (let i = 0; i < hist.length; i++) sum += hist[i];
       if (sum > 0) for (let i = 0; i < hist.length; i++) hist[i] /= sum;
       return hist;
-    }
-
-    // Pre-render target Aizawa onto an offscreen canvas in faint gold
-    function buildMatchGhost(a, d, W, H) {
-      const off = document.createElement('canvas');
-      off.width = W; off.height = H;
-      const oc = off.getContext('2d');
-      const cx = W/2, cy = H/2;
-      const safeR = Math.min(W, H) * 0.44;
-      const sc = Math.min(MATCH_FIXED.scale, safeR / 2.2);
-      const b = MATCH_FIXED.b, c = MATCH_FIXED.c, e = MATCH_FIXED.e, f = MATCH_FIXED.f;
-      const h = 0.01;
-      let x = 0.1, y = 0, z = 0;
-      for (let i = 0; i < MATCH_WARMUP_ITER; i++) {
-        const dx = (z - b) * x - d * y;
-        const dy = d * x + (z - b) * y;
-        const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
-        x += dx * h; y += dy * h; z += dz * h;
-      }
-      oc.fillStyle = 'rgba(176, 141, 87, 0.20)';  // faint gold
-      for (let i = 0; i < MATCH_GHOST_ITER; i++) {
-        const dx = (z - b) * x - d * y;
-        const dy = d * x + (z - b) * y;
-        const dz = c + a * z - z*z*z/3 - (x*x + y*y) * (1 + e * z) + f * z * x*x*x;
-        x += dx * h; y += dy * h; z += dz * h;
-        oc.fillRect(cx + x * sc, cy + y * sc, 1, 1);
-      }
-      return off;
     }
 
     function histogramIntersection(h1, h2) {
@@ -2765,9 +2805,8 @@
     function initMatchGame(s, W, H) {
       const target = pickMatchTarget(null);
       s.target = target;
-      s.targetHist = buildMatchHistogram(target.a, target.d);
-      s.ghostCanvas = buildMatchGhost(target.a, target.d, W, H);
-      s.ghostSize = { W, H };
+      // Build histogram AND render the visible preview pane in a single pass
+      s.targetHist = renderTargetAndHistogram(target.a, target.d);
       // Player starts at a sufficiently different position
       let pa, pd;
       do {
@@ -2830,17 +2869,8 @@
         updateMatchHUD(s);
       },
       draw(ctx, s, W, H, p) {
-        // Resize ghost canvas if window dimensions changed
-        if (!s.ghostSize || s.ghostSize.W !== W || s.ghostSize.H !== H) {
-          s.ghostCanvas = buildMatchGhost(s.target.a, s.target.d, W, H);
-          s.ghostSize = { W, H };
-        }
-
         const cx = W/2, cy = H/2;
         multiplicativeFade(ctx, W, H, MATCH_FIXED.fade);
-
-        // Draw the gold ghost first
-        if (s.ghostCanvas) ctx.drawImage(s.ghostCanvas, 0, 0);
 
         // Iterate player and plot bone, building histogram in the same loop
         const safeR = Math.min(W, H) * 0.44;
