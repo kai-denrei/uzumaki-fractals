@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=527a2ecc">
+<link rel="manifest" href="./manifest.webmanifest?v=e7ee78e7">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=527a2ecc">
+<link rel="apple-touch-icon" href="./icon.svg?v=e7ee78e7">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=527a2ecc");
+    background-image: url("./noise.svg?v=e7ee78e7");
   }
 
   body::after {
@@ -1246,9 +1246,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="527a2ecc">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/18.svg?v=527a2ecc">
-  <script src="./cb-badge.js?v=527a2ecc" defer></script>
+  <meta name="cb" content="e7ee78e7">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/39.svg?v=e7ee78e7">
+  <script src="./cb-badge.js?v=e7ee78e7" defer></script>
 </head>
 <body>
   <canvas id="canvas"></canvas>
@@ -2646,11 +2646,17 @@
     // ════════════════════════════════════════════════════════════════════
     // V16 · MATCH · 型 — replicate the shape
     // ════════════════════════════════════════════════════════════════════
-    const MATCH_TARGET_RANGE = { a: [0.60, 1.30], d: [2.5, 4.3] };
-    const MATCH_PLAYER_RANGE = { a: [0.40, 1.45], d: [2.0, 4.6] };  // slightly wider so player can over/undershoot
-    const MATCH_FIXED  = { b: 0.7, c: 0.6, e: 0.25, f: 0.10, scale: 200, fade: 0.069, iter: 1500 };
-    const MATCH_KEY2DIR = { w: [+1, 'a'], s: [-1, 'a'], a: [-1, 'd'], d: [+1, 'd'] };
-    const MATCH_RATE = { a: 0.30, d: 0.65 };   // units per second held
+    // V16 controls FOUR independent parameters via WASD.
+    // Each key has its own param. Hold to push the value UP at HOLD_RATE;
+    // release and gravity pulls it DOWN at DROP_RATE (half of hold).
+    // Net equilibrium = holding the key ~⅓ of the time. To maintain four
+    // params at four target values, the player juggles four-finger rhythms.
+    const MATCH_KEY2PARAM    = { w: 'a',  a: 'b',  s: 'c',  d: 'd' };
+    const MATCH_TARGET_RANGE = { a: [0.60, 1.30], b: [0.40, 1.00], c: [0.40, 0.95], d: [2.5, 4.3] };
+    const MATCH_PLAYER_RANGE = { a: [0.20, 1.45], b: [0.10, 1.10], c: [0.20, 1.05], d: [1.5, 4.6] };
+    const MATCH_HOLD_RATE    = { a: 0.40, b: 0.35, c: 0.40, d: 0.85 };   // units/sec while held → up
+    const MATCH_DROP_RATE    = { a: 0.20, b: 0.18, c: 0.20, d: 0.45 };   // units/sec idle → down (gravity)
+    const MATCH_FIXED  = { e: 0.25, f: 0.10, scale: 200, fade: 0.069, iter: 1500 };
     const MATCH_BEST_KEY  = 'uzumaki-match-best-v1';
     const MATCH_BINS      = 32;
     const MATCH_RANGE     = 1.5;
@@ -2659,20 +2665,20 @@
     const MATCH_GHOST_ITER  = 60000;
     const MATCH_WARMUP_ITER = 1500;
 
-    function pickMatchTarget(curr) {
-      let a, d;
-      do {
-        a = rand(MATCH_TARGET_RANGE.a[0], MATCH_TARGET_RANGE.a[1]);
-        d = rand(MATCH_TARGET_RANGE.d[0], MATCH_TARGET_RANGE.d[1]);
-      } while (curr && Math.abs(a - curr.a) < 0.15 && Math.abs(d - curr.d) < 0.5);
-      return { a, d };
+    function pickMatchTarget() {
+      return {
+        a: rand(MATCH_TARGET_RANGE.a[0], MATCH_TARGET_RANGE.a[1]),
+        b: rand(MATCH_TARGET_RANGE.b[0], MATCH_TARGET_RANGE.b[1]),
+        c: rand(MATCH_TARGET_RANGE.c[0], MATCH_TARGET_RANGE.c[1]),
+        d: rand(MATCH_TARGET_RANGE.d[0], MATCH_TARGET_RANGE.d[1]),
+      };
     }
 
     // Single pass: render target Aizawa into the visible preview canvas
     // AND build the 32×32 spatial histogram used for match scoring.
     // Returns the normalized histogram.
     const MATCH_PREVIEW_SIZE = 200;
-    function renderTargetAndHistogram(a, d) {
+    function renderTargetAndHistogram(a, b, c, d) {
       // Preview canvas (visible — sits at the top of the controls panel)
       const previewCanvas = document.getElementById('match-preview-canvas');
       let pctx = null, cx = 0, cy = 0, sc = 0;
@@ -2696,7 +2702,7 @@
       const bins = MATCH_BINS;
       const range = MATCH_RANGE;
       const hist = new Float32Array(bins * bins);
-      const b = MATCH_FIXED.b, c = MATCH_FIXED.c, e = MATCH_FIXED.e, f = MATCH_FIXED.f;
+      const e = MATCH_FIXED.e, f = MATCH_FIXED.f;
       const h = 0.01;
       let x = 0.1, y = 0, z = 0;
 
@@ -2748,9 +2754,9 @@
       if (t) t.style.left = (MATCH_WIN_THRESH * 100) + '%';
       const instr = document.getElementById('game-instructions');
       if (instr) instr.innerHTML =
-        '<b>WASD</b> navigates parameter space: W/S adjust <em>a</em>, A/D adjust <em>d</em>. ' +
-        'Match the gold ghost shape — bone covers gold when aligned. ' +
-        'Sustain <em>match ≥ 80%</em> for <em>2 seconds</em>.';
+        '<b>Each key holds its own thruster:</b> W→<em>a</em>, A→<em>b</em>, S→<em>c</em>, D→<em>d</em>. ' +
+        'Hold to push the value up; release and gravity pulls it down. ' +
+        'Match the gold ghost shape. Sustain <em>match ≥ 80%</em> for <em>2 seconds</em>.';
     }
 
     function updateMatchHUD(s) {
@@ -2767,11 +2773,11 @@
         const best = parseFloat(localStorage.getItem(MATCH_BEST_KEY) || 'NaN');
         bestEl.textContent = isFinite(best) ? best.toFixed(1) + 's' : '—';
       }
-      // Keypad: W/S show param a, A/D show param d. No gold target tick (hidden via CSS).
+      // Keypad: W→a, A→b, S→c, D→d. Each key shows its own parameter.
       for (const key of ['w','a','s','d']) {
         const cell = document.querySelector(`.kp-cell[data-k="${key}"]`);
         if (!cell) continue;
-        const [, param] = MATCH_KEY2DIR[key];
+        const param = MATCH_KEY2PARAM[key];
         const value = s.gp[param];
         const [lo, hi] = MATCH_PLAYER_RANGE[param];
         const valFrac = Math.max(0, Math.min(1, (value - lo) / (hi - lo)));
@@ -2803,17 +2809,18 @@
     }
 
     function initMatchGame(s, W, H) {
-      const target = pickMatchTarget(null);
+      const target = pickMatchTarget();
       s.target = target;
       // Build histogram AND render the visible preview pane in a single pass
-      s.targetHist = renderTargetAndHistogram(target.a, target.d);
-      // Player starts at a sufficiently different position
-      let pa, pd;
-      do {
-        pa = rand(MATCH_PLAYER_RANGE.a[0], MATCH_PLAYER_RANGE.a[1]);
-        pd = rand(MATCH_PLAYER_RANGE.d[0], MATCH_PLAYER_RANGE.d[1]);
-      } while (Math.abs(pa - target.a) < 0.25 && Math.abs(pd - target.d) < 0.6);
-      s.gp = { a: pa, d: pd };
+      s.targetHist = renderTargetAndHistogram(target.a, target.b, target.c, target.d);
+      // Player params start near (but not at) the floor of each range,
+      // forcing them to "fly up" via key holds to find the target values.
+      s.gp = {
+        a: MATCH_PLAYER_RANGE.a[0] + 0.05,
+        b: MATCH_PLAYER_RANGE.b[0] + 0.05,
+        c: MATCH_PLAYER_RANGE.c[0] + 0.05,
+        d: MATCH_PLAYER_RANGE.d[0] + 0.1,
+      };
       s.x = 0.1; s.y = 0; s.z = 0;
       s.playerHist = new Float32Array(MATCH_BINS * MATCH_BINS);
       s.matchScore = 0;
@@ -2829,7 +2836,7 @@
       subtitle: 'replicate · nº 16', index: '型 · match the shape',
       formula:
         _.eq(_.lbl('match · 型 · replicate the shape')) +
-        _.eq('hold ', _.v('W'), '/', _.v('S'), ' to nudge ', _.v('a'), '; ', _.v('A'), '/', _.v('D'), ' to nudge ', _.v('d'), '.') +
+        _.eq('hold ', _.v('W'), '→', _.v('a'), ', ', _.v('A'), '→', _.v('b'), ', ', _.v('S'), '→', _.v('c'), ', ', _.v('D'), '→', _.v('d'), '. release = gravity.') +
         _.eq('match the ', _.g('gold ghost'), ' with your shape.'),
       params: [],
       setup(s, W, H) { initMatchGame(s, W, H); },
@@ -2837,13 +2844,16 @@
         if (s.won) return;
         s.timer += dt;
 
-        // Key inputs — constant nudge while held
-        for (const key of Object.keys(MATCH_KEY2DIR)) {
-          if (!s.keys[key]) continue;
-          const [sign, param] = MATCH_KEY2DIR[key];
-          const rate = MATCH_RATE[param];
+        // Key inputs: hold to push UP, release lets gravity pull DOWN.
+        // Each key drives its own independent parameter.
+        for (const key of Object.keys(MATCH_KEY2PARAM)) {
+          const param = MATCH_KEY2PARAM[key];
           const [lo, hi] = MATCH_PLAYER_RANGE[param];
-          s.gp[param] = Math.max(lo, Math.min(hi, s.gp[param] + sign * rate * dt));
+          if (s.keys[key]) {
+            s.gp[param] = Math.min(hi, s.gp[param] + MATCH_HOLD_RATE[param] * dt);
+          } else {
+            s.gp[param] = Math.max(lo, s.gp[param] - MATCH_DROP_RATE[param] * dt);
+          }
         }
 
         // Compute match from last frame's player histogram
@@ -2876,8 +2886,8 @@
         const safeR = Math.min(W, H) * 0.44;
         const sc = Math.min(MATCH_FIXED.scale, safeR / 2.2);
         const hh = 0.01;
-        const a = s.gp.a, d = s.gp.d;
-        const b = MATCH_FIXED.b, c = MATCH_FIXED.c, e = MATCH_FIXED.e, f = MATCH_FIXED.f;
+        const a = s.gp.a, b = s.gp.b, c = s.gp.c, d = s.gp.d;
+        const e = MATCH_FIXED.e, f = MATCH_FIXED.f;
         const N = MATCH_FIXED.iter;
         const bins = MATCH_BINS;
         const range = MATCH_RANGE;
