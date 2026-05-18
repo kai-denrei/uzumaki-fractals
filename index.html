@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=311fa37c">
+<link rel="manifest" href="./manifest.webmanifest?v=9be7826c">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=311fa37c">
+<link rel="apple-touch-icon" href="./icon.svg?v=9be7826c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=311fa37c");
+    background-image: url("./noise.svg?v=9be7826c");
   }
 
   body::after {
@@ -347,28 +347,37 @@
     z-index: 11;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0;
     user-select: none;
+    max-width: calc(100vw - 4rem);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 0.25rem;
+    mask-image: linear-gradient(to right, transparent, black 1.5rem, black calc(100% - 1.5rem), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 1.5rem, black calc(100% - 1.5rem), transparent);
   }
+  .tabs::-webkit-scrollbar { display: none; }
   .tab {
     background: transparent;
     border: none;
     color: var(--bone-faint);
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.32em;
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     cursor: pointer;
-    padding: 0.65rem 1rem 0.7rem;
+    padding: 0.5rem 0.55rem 0.55rem;
     display: flex;
     align-items: baseline;
-    gap: 0.7rem;
+    gap: 0.45rem;
     position: relative;
-    transition: color 0.25s;
+    transition: color 0.22s;
+    flex: none;
   }
   .tab .ja {
     font-family: 'Shippori Mincho B1', serif;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: var(--gold);
     font-style: italic;
     letter-spacing: 0;
@@ -376,20 +385,22 @@
   }
   .tab:hover { color: var(--bone-dim); }
   .tab.active { color: var(--bone); }
+  .tab.active .ja { color: var(--cinnabar); }
   .tab.active::after {
     content: '';
     position: absolute;
     bottom: 0;
-    left: 1rem;
-    right: 1rem;
+    left: 0.55rem;
+    right: 0.55rem;
     height: 1px;
     background: var(--cinnabar);
     box-shadow: 0 0 8px rgba(193,39,45,0.6);
   }
   .tab-sep {
     width: 1px;
-    height: 0.8rem;
+    height: 0.7rem;
     background: var(--bone-faint);
+    flex: none;
   }
 
   /* mode-scoped chrome */
@@ -665,29 +676,14 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="311fa37c">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/49.svg?v=311fa37c">
-  <script src="./cb-badge.js?v=311fa37c" defer></script>
+  <meta name="cb" content="9be7826c">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/27.svg?v=9be7826c">
+  <script src="./cb-badge.js?v=9be7826c" defer></script>
 </head>
 <body class="mode-v3">
   <canvas id="canvas"></canvas>
 
-  <nav class="tabs reveal reveal-1">
-    <button class="tab" data-mode="v1">
-      <span class="ver">V1</span>
-      <span class="ja">渦</span>
-    </button>
-    <span class="tab-sep"></span>
-    <button class="tab" data-mode="v2">
-      <span class="ver">V2</span>
-      <span class="ja">種</span>
-    </button>
-    <span class="tab-sep"></span>
-    <button class="tab active" data-mode="v3">
-      <span class="ver">V3</span>
-      <span class="ja">夢</span>
-    </button>
-  </nav>
+  <nav class="tabs reveal reveal-1" id="tab-nav" aria-label="visualization tabs"></nav>
 
   <div class="kanji-mark reveal reveal-1">渦巻</div>
 
@@ -701,93 +697,23 @@
     </button>
   </div>
 
-  <div class="formula reveal reveal-4">
-    <div><em>r</em>(<b>t</b>) &nbsp; = &nbsp; <b>t</b><em>ᵖ</em> &nbsp;÷&nbsp; (<b>t</b> + <em>d</em>)</div>
-    <div><em>θ</em>(<b>t</b>) &nbsp; = &nbsp; <em>c</em><b>t</b> &nbsp;+&nbsp; sin( <em>c</em><b>t</b> · sin( <em>κ</em><b>t</b> ) )</div>
-  </div>
+  <div class="formula reveal reveal-4" id="formula"></div>
 
   <aside class="controls reveal reveal-3">
     <div class="controls-title">
       <span class="en">parameters</span>
       <span class="ja">変数</span>
     </div>
-
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="name"><span class="sym">κ</span> kappa <span class="ja">核</span></span>
-        <span class="value" id="v-kappa">83.333</span>
-      </div>
-      <input type="range" id="kappa" min="0" max="200" step="0.001" value="83.333">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="name"><span class="sym">p</span> power <span class="ja">勢</span></span>
-        <span class="value" id="v-power">1.500</span>
-      </div>
-      <input type="range" id="power" min="0.5" max="3" step="0.001" value="1.5">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="name"><span class="sym">d</span> divisor <span class="ja">幅</span></span>
-        <span class="value" id="v-divisor">1000</span>
-      </div>
-      <input type="range" id="divisor" min="100" max="3000" step="1" value="1000">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="name"><span class="sym">c</span> twist <span class="ja">捻</span></span>
-        <span class="value" id="v-coeff">0.100</span>
-      </div>
-      <input type="range" id="coeff" min="0.01" max="0.5" step="0.001" value="0.1">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="name"><span class="sym">t</span> extent <span class="ja">道</span></span>
-        <span class="value" id="v-tmax">300</span>
-      </div>
-      <input type="range" id="tmax" min="50" max="800" step="1" value="300">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="name"><span class="sym">s</span> scale <span class="ja">寸</span></span>
-        <span class="value" id="v-scale">90</span>
-      </div>
-      <input type="range" id="scale" min="30" max="300" step="1" value="90">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="name"><span class="sym">ω</span> speed <span class="ja">速</span></span>
-        <span class="value" id="v-phase">0.00000100</span>
-      </div>
-      <input type="range" id="phase" min="-0.00001" max="0.00001" step="0.00000001" value="0.000001">
-    </div>
-
-    <div class="slider-group growth-control">
-      <div class="slider-label">
-        <span class="name"><span class="sym">γ</span> growth · sec <span class="ja">芽</span></span>
-        <span class="value" id="v-growth">8.0</span>
-      </div>
-      <input type="range" id="growth" min="0.5" max="60" step="0.1" value="8">
-    </div>
-
+    <div id="dynamic-sliders"></div>
     <div class="footer-actions">
       <button id="reset">reset</button>
-      <button id="regrow" class="growth-control">regrow</button>
       <button id="pause" class="primary">pause</button>
     </div>
   </aside>
 
   <div class="hud reveal reveal-4">
     <div><b>fps</b><span id="fps">—</span></div>
-    <div><b>samples</b><span id="samples">—</span></div>
-    <div><b>phase</b><span id="phaseval">0.0000000</span></div>
-    <div class="drift-readout"><b>夢 drift</b><span id="driftval">— —</span></div>
+    <div><b>active</b><span id="active-name">—</span></div>
     <div><b>渦</b>animate<span class="live"></span></div>
   </div>
 
@@ -806,425 +732,882 @@
   </div>
 
   <script>
+    'use strict';
+
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
     let DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0;
 
     function resize() {
-      const w = window.innerWidth, h = window.innerHeight;
-      canvas.width = Math.floor(w * DPR);
-      canvas.height = Math.floor(h * DPR);
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width  = W + 'px';
+      canvas.style.height = H + 'px';
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      if (activeViz && activeViz.setup) activeViz.setup(stateMap[activeId], W, H, currentParams);
     }
     window.addEventListener('resize', resize);
-    resize();
 
-    const defaults = {
-      kappa: 83.333, power: 1.5, divisor: 1000,
-      coeff: 0.1, tmax: 300, scale: 90, phase: 0.000001,
-      growth: 8,
-    };
-    const params = { ...defaults };
-    let phase = 0;
-    let paused = false;
-    let mode = 'v1';
-    let growthT = params.tmax; // current grown extent in V2; equals tmax in V1
+    // ─────────────────────────── Helpers ───────────────────────────
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const easeInOutQuad = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
 
-    // ---------- V3 drift state ----------
-    // One knob at a time, small delta, long interval. The dream is patient.
-    const DRIFT_KEYS = ['kappa','power','divisor','coeff','tmax','scale','phase'];
-    const DRIFT_SYMBOL = {
-      kappa: 'κ', power: 'p', divisor: 'd', coeff: 'c',
-      tmax: 't', scale: 's', phase: 'ω',
-    };
-    // [min, max, max-step-magnitude] for the per-nudge bounded random walk
-    const DRIFT_RANGES = {
+    function fillBg(ctx, W, H) {
+      ctx.fillStyle = '#050403';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function strokePts(ctx, pts, color, width) {
+      if (pts.length < 4) return;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0], pts[1]);
+      for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i+1]);
+      ctx.stroke();
+    }
+
+    function multiPassStroke(ctx, pts) {
+      strokePts(ctx, pts, 'rgba(193,  39,  45, 0.07)', 5.0);
+      strokePts(ctx, pts, 'rgba(176, 141,  87, 0.16)', 1.8);
+      strokePts(ctx, pts, 'rgba(245, 240, 230, 0.22)', 1.1);
+      strokePts(ctx, pts, 'rgba(245, 240, 230, 0.95)', 0.55);
+    }
+
+    // Pts are origin-centered. Translates to (cx,cy) and scales down if bbox
+    // would exceed 44% of min(W,H). Returns the fit factor.
+    function fitAndTranslate(pts, cx, cy, W, H) {
+      let maxDist = 0;
+      for (let i = 0; i < pts.length; i += 2) {
+        const d = Math.max(Math.abs(pts[i]), Math.abs(pts[i+1]));
+        if (d > maxDist) maxDist = d;
+      }
+      const safeR = Math.min(W, H) * 0.44;
+      const fit = (maxDist > safeR && maxDist > 0) ? safeR / maxDist : 1;
+      for (let i = 0; i < pts.length; i += 2) {
+        pts[i]   = cx + pts[i]   * fit;
+        pts[i+1] = cy + pts[i+1] * fit;
+      }
+      return fit;
+    }
+
+    function drawTipGlow(ctx, x, y) {
+      ctx.fillStyle = 'rgba(193, 39, 45, 0.25)';
+      ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(176, 141, 87, 0.35)';
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(245, 240, 230, 1)';
+      ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Cheap hash-based value noise for curl-noise viz
+    function hash2(x, y) {
+      const h = Math.sin(x * 12.9898 + y * 78.233 + 1) * 43758.5453;
+      return (h - Math.floor(h)) * 2 - 1;
+    }
+    const smoothstep = t => t*t*(3 - 2*t);
+    function noise2(x, y, t) {
+      const xi = Math.floor(x), yi = Math.floor(y);
+      const xf = x - xi, yf = y - yi;
+      const u = smoothstep(xf), v = smoothstep(yf);
+      const tt = t * 17.3;
+      const a = hash2(xi + tt,     yi);
+      const b = hash2(xi + 1 + tt, yi);
+      const c = hash2(xi + tt,     yi + 1);
+      const d = hash2(xi + 1 + tt, yi + 1);
+      return (a*(1-u) + b*u)*(1-v) + (c*(1-u) + d*u)*v;
+    }
+
+    // ─────────────────────────── Uzumaki helpers ───────────────────────────
+    // Returns [tipX, tipY] of the rendered curve (post-fit, in screen coords).
+    function drawUzumakiCurve(ctx, s, W, H, p, tCap) {
+      const cx = W/2, cy = H/2;
+      const step = Math.max(0.02, p.tmax / 5500);
+      const pts = [];
+      for (let t = 0; t < tCap; t += step) {
+        const r = Math.pow(t, p.power) / (t + p.divisor);
+        const inner = Math.sin((p.kappa + s.phase) * t);
+        const theta = p.coeff * t + Math.sin(p.coeff * t * inner);
+        pts.push(p.scale * r * Math.cos(theta), p.scale * r * Math.sin(theta));
+      }
+      fitAndTranslate(pts, cx, cy, W, H);
+      multiPassStroke(ctx, pts);
+      return pts.length >= 2 ? [pts[pts.length-2], pts[pts.length-1]] : [cx, cy];
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // VISUALIZATION REGISTRY
+    // ════════════════════════════════════════════════════════════════════
+    const VIZ = [];
+
+    // V1 · Uzumaki · parametric ----------------------------------------
+    VIZ.push({
+      id: 'v1', ja: '渦', short: 'V1',
+      subtitle: 'parametric · nº 01', index: '渦 · spiral · vortex',
+      formula: '<em>r</em>(<b>t</b>) = <b>t</b><em>ᵖ</em> ÷ (<b>t</b>+<em>d</em>) &nbsp;·&nbsp; <em>θ</em>(<b>t</b>) = <em>c</em><b>t</b> + sin(<em>c</em><b>t</b> · sin(<em>κ</em><b>t</b>))',
+      params: [
+        {key:'kappa',   sym:'κ', label:'kappa',   ja:'核', min:0,        max:200,     step:0.001,      value:83.333,  fmt:v=>v.toFixed(3)},
+        {key:'power',   sym:'p', label:'power',   ja:'勢', min:0.5,      max:3,       step:0.001,      value:1.5,     fmt:v=>v.toFixed(3)},
+        {key:'divisor', sym:'d', label:'divisor', ja:'幅', min:100,      max:3000,    step:1,          value:1000,    fmt:v=>v.toFixed(0)},
+        {key:'coeff',   sym:'c', label:'twist',   ja:'捻', min:0.01,     max:0.5,     step:0.001,      value:0.1,     fmt:v=>v.toFixed(3)},
+        {key:'tmax',    sym:'t', label:'extent',  ja:'道', min:50,       max:800,     step:1,          value:300,     fmt:v=>v.toFixed(0)},
+        {key:'scale',   sym:'s', label:'scale',   ja:'寸', min:30,       max:300,     step:1,          value:90,      fmt:v=>v.toFixed(0)},
+        {key:'speed',   sym:'ω', label:'speed',   ja:'速', min:-0.00001, max:0.00001, step:0.00000001, value:0.000001,fmt:v=>v.toFixed(8)},
+      ],
+      setup(s) { s.phase = 0; },
+      tick(s, dt, p) { s.phase += p.speed * dt * 60; },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        drawUzumakiCurve(ctx, s, W, H, p, p.tmax);
+      },
+    });
+
+    // V2 · Uzumaki · germination ---------------------------------------
+    VIZ.push({
+      id: 'v2', ja: '種', short: 'V2',
+      subtitle: 'germination · nº 02', index: '種 · seed · unfurling',
+      formula: '<em>r</em>(<b>t</b>) = <b>t</b><em>ᵖ</em> ÷ (<b>t</b>+<em>d</em>) &nbsp;·&nbsp; <em>θ</em>(<b>t</b>) = <em>c</em><b>t</b> + sin(<em>c</em><b>t</b> · sin(<em>κ</em><b>t</b>))',
+      params: [
+        {key:'kappa',   sym:'κ', label:'kappa',     ja:'核', min:0,        max:200,     step:0.001,      value:83.333,  fmt:v=>v.toFixed(3)},
+        {key:'power',   sym:'p', label:'power',     ja:'勢', min:0.5,      max:3,       step:0.001,      value:1.5,     fmt:v=>v.toFixed(3)},
+        {key:'divisor', sym:'d', label:'divisor',   ja:'幅', min:100,      max:3000,    step:1,          value:1000,    fmt:v=>v.toFixed(0)},
+        {key:'coeff',   sym:'c', label:'twist',     ja:'捻', min:0.01,     max:0.5,     step:0.001,      value:0.1,     fmt:v=>v.toFixed(3)},
+        {key:'tmax',    sym:'t', label:'extent',    ja:'道', min:50,       max:800,     step:1,          value:300,     fmt:v=>v.toFixed(0)},
+        {key:'scale',   sym:'s', label:'scale',     ja:'寸', min:30,       max:300,     step:1,          value:90,      fmt:v=>v.toFixed(0)},
+        {key:'speed',   sym:'ω', label:'speed',     ja:'速', min:-0.00001, max:0.00001, step:0.00000001, value:0.000001,fmt:v=>v.toFixed(8)},
+        {key:'growth',  sym:'γ', label:'grow · s',  ja:'芽', min:0.5,      max:60,      step:0.1,        value:8,       fmt:v=>v.toFixed(1)},
+      ],
+      setup(s) { s.phase = 0; s.growthT = 0; },
+      tick(s, dt, p) {
+        s.phase += p.speed * dt * 60;
+        if (s.growthT < p.tmax) {
+          const rate = p.tmax / Math.max(0.1, p.growth);
+          s.growthT = Math.min(p.tmax, s.growthT + rate * dt);
+        }
+      },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const [tx, ty] = drawUzumakiCurve(ctx, s, W, H, p, s.growthT);
+        if (s.growthT < p.tmax) drawTipGlow(ctx, tx, ty);
+      },
+    });
+
+    // V3 · Uzumaki · drift ---------------------------------------------
+    const V3_KEYS = ['kappa','power','divisor','coeff','tmax','scale','speed'];
+    const V3_RANGES = {
       kappa:   [0,        200,      4.5      ],
       power:   [1.0,      2.4,      0.07     ],
       divisor: [100,      2500,     70       ],
       coeff:   [0.01,     0.3,      0.007    ],
       tmax:    [50,       600,      26       ],
       scale:   [30,       180,      7        ],
-      phase:   [-0.00001, 0.00001,  0.0000005],
+      speed:   [-0.00001, 0.00001,  0.0000005],
     };
-    // Each cycle nudges 2–3 random knobs simultaneously — every variable
-    // participates in the rng, not just one at a time.
-    let driftKeys = [];
-    let driftStarts = [];
-    let driftTargets = [];
-    let driftElapsed = 0, driftInterval = 0;
-    let driftSyncTimer = 0;
-    // V3 life cycle: growing ↔ unwinding (no pause at full extent)
-    let cyclePhase = 'growing';
-
-    const rand = (a, b) => a + Math.random() * (b - a);
-    const easeInOutQuad = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
-
-    function pickNextDrift() {
-      // Pick 2–3 random knobs simultaneously; every variable gets to play.
-      const numKnobs = 2 + Math.floor(Math.random() * 2);   // 2 or 3
-      const pool = DRIFT_KEYS.slice();
+    function pickV3Drift(s) {
+      const n = 2 + Math.floor(Math.random() * 2);
+      const pool = V3_KEYS.slice();
       for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(Math.random() * (i+1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
-      driftKeys = pool.slice(0, numKnobs);
-      driftStarts = driftKeys.map(k => params[k]);
-      driftTargets = driftKeys.map(k => {
-        const [lo, hi, ms] = DRIFT_RANGES[k];
-        const delta = (Math.random() - 0.5) * 2 * ms;
-        return Math.max(lo, Math.min(hi, params[k] + delta));
+      s.driftKeys = pool.slice(0, n);
+      s.driftStarts = s.driftKeys.map(k => currentParams[k]);
+      s.driftTargets = s.driftKeys.map(k => {
+        const [lo, hi, ms] = V3_RANGES[k];
+        return Math.max(lo, Math.min(hi, currentParams[k] + (Math.random() - 0.5) * 2 * ms));
       });
-      driftInterval = rand(8, 20);
-      driftElapsed = 0;
+      s.driftInterval = rand(8, 20);
+      s.driftElapsed = 0;
     }
-
-    function initDrift() {
-      // Quiet, contemplative opening state.
-      Object.assign(params, {
-        kappa:   1.447,
-        power:   1.934,
-        divisor: 100,
-        coeff:   0.010,
-        tmax:    50,
-        scale:   30,
-        phase:   -0.00001,
-        growth:  7.0,
-      });
-      driftKeys = [];
-      pickNextDrift();
-      driftSyncTimer = 0;
-      growthT = 0;                       // start from a single dot
-      cyclePhase = 'growing';
-      syncReadouts();
-    }
-
-    function driftTick(dt) {
-      driftElapsed += dt;
-      const t = Math.min(1, driftElapsed / driftInterval);
-      const e = easeInOutQuad(t);
-      for (let i = 0; i < driftKeys.length; i++) {
-        params[driftKeys[i]] = driftStarts[i] + (driftTargets[i] - driftStarts[i]) * e;
-      }
-      if (t >= 1) pickNextDrift();
-
-      driftSyncTimer += dt;
-      if (driftSyncTimer > 0.15) {
-        driftSyncTimer = 0;
-        syncReadouts();
-      }
-    }
-
-    function cycleTick(dt) {
-      // V3 cycle — never pauses. Always either growing or unwinding.
-      const tmaxNow = params.tmax;
-      const rate = tmaxNow / Math.max(0.5, params.growth);
-      if (cyclePhase === 'growing') {
-        growthT = Math.min(tmaxNow, growthT + rate * dt);
-        if (growthT >= tmaxNow) cyclePhase = 'unwinding';
-      } else {
-        growthT = Math.max(0, growthT - rate * dt);
-        if (growthT <= 0) cyclePhase = 'growing';
-      }
-    }
-
-    const bindings = [
-      ['kappa',   'v-kappa',   v => v.toFixed(3)],
-      ['power',   'v-power',   v => v.toFixed(3)],
-      ['divisor', 'v-divisor', v => v.toFixed(0)],
-      ['coeff',   'v-coeff',   v => v.toFixed(3)],
-      ['tmax',    'v-tmax',    v => v.toFixed(0)],
-      ['scale',   'v-scale',   v => v.toFixed(0)],
-      ['phase',   'v-phase',   v => v.toFixed(8)],
-      ['growth',  'v-growth',  v => v.toFixed(1)],
-    ];
-
-    function syncReadouts() {
-      bindings.forEach(([k, id, fmt]) => {
-        document.getElementById(id).textContent = fmt(params[k]);
-        document.getElementById(k).value = params[k];
-      });
-    }
-
-    bindings.forEach(([k, id, fmt]) => {
-      const el = document.getElementById(k);
-      el.addEventListener('input', e => {
-        params[k] = parseFloat(e.target.value);
-        document.getElementById(id).textContent = fmt(params[k]);
-      });
+    VIZ.push({
+      id: 'v3', ja: '夢', short: 'V3',
+      subtitle: 'drift · nº 03', index: '夢 · dream · self-modulating',
+      formula: '<em>r</em>(<b>t</b>) = <b>t</b><em>ᵖ</em> ÷ (<b>t</b>+<em>d</em>) &nbsp;·&nbsp; <em>θ</em>(<b>t</b>) = <em>c</em><b>t</b> + sin(<em>c</em><b>t</b> · sin(<em>κ</em><b>t</b>))',
+      params: [
+        {key:'kappa',   sym:'κ', label:'kappa',    ja:'核', min:0,        max:200,     step:0.001,      value:1.447,    fmt:v=>v.toFixed(3)},
+        {key:'power',   sym:'p', label:'power',    ja:'勢', min:0.5,      max:3,       step:0.001,      value:1.934,    fmt:v=>v.toFixed(3)},
+        {key:'divisor', sym:'d', label:'divisor',  ja:'幅', min:100,      max:3000,    step:1,          value:100,      fmt:v=>v.toFixed(0)},
+        {key:'coeff',   sym:'c', label:'twist',    ja:'捻', min:0.01,     max:0.5,     step:0.001,      value:0.010,    fmt:v=>v.toFixed(3)},
+        {key:'tmax',    sym:'t', label:'extent',   ja:'道', min:50,       max:800,     step:1,          value:50,       fmt:v=>v.toFixed(0)},
+        {key:'scale',   sym:'s', label:'scale',    ja:'寸', min:30,       max:300,     step:1,          value:30,       fmt:v=>v.toFixed(0)},
+        {key:'speed',   sym:'ω', label:'speed',    ja:'速', min:-0.00001, max:0.00001, step:0.00000001, value:-0.00001, fmt:v=>v.toFixed(8)},
+        {key:'growth',  sym:'γ', label:'cycle · s',ja:'芽', min:1,        max:60,      step:0.1,        value:7,        fmt:v=>v.toFixed(1)},
+      ],
+      setup(s) {
+        s.phase = 0;
+        s.growthT = 0;
+        s.cyclePhase = 'growing';
+        s.driftSyncTimer = 0;
+        pickV3Drift(s);
+      },
+      tick(s, dt, p) {
+        s.phase += p.speed * dt * 60;
+        // drift
+        s.driftElapsed += dt;
+        const t = Math.min(1, s.driftElapsed / s.driftInterval);
+        const e = easeInOutQuad(t);
+        for (let i = 0; i < s.driftKeys.length; i++) {
+          currentParams[s.driftKeys[i]] =
+            s.driftStarts[i] + (s.driftTargets[i] - s.driftStarts[i]) * e;
+        }
+        if (t >= 1) pickV3Drift(s);
+        s.driftSyncTimer += dt;
+        if (s.driftSyncTimer > 0.15) { s.driftSyncTimer = 0; syncSliderValues(); }
+        // cycle
+        const rate = p.tmax / Math.max(0.5, p.growth);
+        if (s.cyclePhase === 'growing') {
+          s.growthT = Math.min(p.tmax, s.growthT + rate * dt);
+          if (s.growthT >= p.tmax) s.cyclePhase = 'unwinding';
+        } else {
+          s.growthT = Math.max(0, s.growthT - rate * dt);
+          if (s.growthT <= 0) s.cyclePhase = 'growing';
+        }
+      },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const [tx, ty] = drawUzumakiCurve(ctx, s, W, H, p, s.growthT);
+        drawTipGlow(ctx, tx, ty);
+      },
     });
+
+    // V4 · Phyllotaxis -------------------------------------------------
+    VIZ.push({
+      id: 'phyllo', ja: '葉', short: 'V4',
+      subtitle: 'phyllotaxis · nº 04', index: '葉 · seed packing · golden angle',
+      formula: '<em>r</em>(k) = <em>c</em>√k &nbsp;·&nbsp; <em>θ</em>(k) = k·<em>ψ</em> &nbsp;·&nbsp; <em>ψ</em> ≈ 137.508°',
+      params: [
+        {key:'psi',   sym:'ψ', label:'angle',    ja:'角', min:130,    max:145,   step:0.001,   value:137.508, fmt:v=>v.toFixed(3)+'°'},
+        {key:'count', sym:'N', label:'seeds',    ja:'数', min:200,    max:3000,  step:10,      value:1500,    fmt:v=>v.toFixed(0)},
+        {key:'c',     sym:'c', label:'spacing',  ja:'寸', min:3,      max:20,    step:0.1,     value:9,       fmt:v=>v.toFixed(1)},
+        {key:'dot',   sym:'r', label:'dot size', ja:'粒', min:0.5,    max:4,     step:0.1,     value:1.8,     fmt:v=>v.toFixed(1)},
+        {key:'speed', sym:'ω', label:'ψ drift',  ja:'速', min:-0.01,  max:0.01,  step:0.00001, value:0.0008,  fmt:v=>v.toFixed(5)},
+      ],
+      setup(s) { s.drift = 0; },
+      tick(s, dt, p) { s.drift += p.speed * dt * 60; },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const cx = W/2, cy = H/2;
+        const psiRad = (p.psi + s.drift) * Math.PI / 180;
+        const N = Math.floor(p.count);
+        const maxR = p.c * Math.sqrt(N);
+        const safeR = Math.min(W, H) * 0.44;
+        const fit = (maxR > safeR) ? safeR / maxR : 1;
+        ctx.fillStyle = 'rgba(245, 240, 230, 0.85)';
+        for (let k = 0; k < N; k++) {
+          const r = p.c * Math.sqrt(k) * fit;
+          const a = k * psiRad;
+          ctx.beginPath();
+          ctx.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), p.dot, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(193, 39, 45, 0.7)';
+        for (let k = Math.max(0, N-25); k < N; k++) {
+          const r = p.c * Math.sqrt(k) * fit;
+          const a = k * psiRad;
+          ctx.beginPath();
+          ctx.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), p.dot, 0, Math.PI*2);
+          ctx.fill();
+        }
+      },
+    });
+
+    // V5 · Maurer rose -------------------------------------------------
+    VIZ.push({
+      id: 'maurer', ja: '薇', short: 'V5',
+      subtitle: 'maurer rose · nº 05', index: '薇 · rose · star polygon procession',
+      formula: '<em>r</em> = sin(<em>n</em>θ) &nbsp;·&nbsp; θ = k·<em>d</em>°',
+      params: [
+        {key:'n',     sym:'n', label:'petals', ja:'弁', min:2,    max:12,   step:1,     value:6,   fmt:v=>v.toFixed(0)},
+        {key:'d',     sym:'d', label:'step°',  ja:'歩', min:1,    max:180,  step:0.01,  value:71,  fmt:v=>v.toFixed(2)+'°'},
+        {key:'scale', sym:'s', label:'scale',  ja:'寸', min:50,   max:400,  step:1,     value:220, fmt:v=>v.toFixed(0)},
+        {key:'speed', sym:'ω', label:'d drift',ja:'速', min:-0.5, max:0.5,  step:0.001, value:0.05,fmt:v=>v.toFixed(3)},
+      ],
+      setup(s) { s.drift = 0; },
+      tick(s, dt, p) { s.drift += p.speed * dt; },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const cx = W/2, cy = H/2;
+        const dDeg = p.d + s.drift;
+        const pts = [];
+        for (let k = 0; k <= 361; k++) {
+          const th = k * dDeg * Math.PI / 180;
+          const r = p.scale * Math.sin(p.n * th);
+          pts.push(r * Math.cos(th), r * Math.sin(th));
+        }
+        fitAndTranslate(pts, cx, cy, W, H);
+        multiPassStroke(ctx, pts);
+      },
+    });
+
+    // V6 · Superformula (Gielis) ---------------------------------------
+    VIZ.push({
+      id: 'super', ja: '超', short: 'V6',
+      subtitle: 'superformula · nº 06', index: '超 · gielis · k-fold symmetry',
+      formula: '<em>r</em>(θ) = (|cos(<em>m</em>θ/4)|<em>ⁿ²</em> + |sin(<em>m</em>θ/4)|<em>ⁿ³</em>)<em>^(−1/n₁)</em>',
+      params: [
+        {key:'m',     sym:'m',  label:'symmetry', ja:'対', min:0,    max:14,  step:0.01,  value:5,    fmt:v=>v.toFixed(2)},
+        {key:'n1',    sym:'n₁', label:'n1',       ja:'一', min:0.1,  max:8,   step:0.01,  value:1.2,  fmt:v=>v.toFixed(2)},
+        {key:'n2',    sym:'n₂', label:'n2',       ja:'二', min:0.1,  max:8,   step:0.01,  value:1,    fmt:v=>v.toFixed(2)},
+        {key:'n3',    sym:'n₃', label:'n3',       ja:'三', min:0.1,  max:8,   step:0.01,  value:1,    fmt:v=>v.toFixed(2)},
+        {key:'scale', sym:'s',  label:'scale',    ja:'寸', min:30,   max:300, step:1,     value:150,  fmt:v=>v.toFixed(0)},
+        {key:'speed', sym:'ω',  label:'m drift',  ja:'速', min:-0.5, max:0.5, step:0.001, value:0.05, fmt:v=>v.toFixed(3)},
+      ],
+      setup(s) { s.drift = 0; },
+      tick(s, dt, p) { s.drift += p.speed * dt; },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const cx = W/2, cy = H/2;
+        const m = p.m + s.drift;
+        const pts = [];
+        const steps = 720;
+        for (let i = 0; i <= steps; i++) {
+          const th = (i / steps) * Math.PI * 2;
+          const t1 = Math.pow(Math.abs(Math.cos(m * th / 4)), p.n2);
+          const t2 = Math.pow(Math.abs(Math.sin(m * th / 4)), p.n3);
+          let r = p.scale * Math.pow(t1 + t2, -1 / p.n1);
+          if (!isFinite(r)) r = 0;
+          pts.push(r * Math.cos(th), r * Math.sin(th));
+        }
+        fitAndTranslate(pts, cx, cy, W, H);
+        multiPassStroke(ctx, pts);
+      },
+    });
+
+    // V7 · Lissajous ---------------------------------------------------
+    VIZ.push({
+      id: 'lissajous', ja: '振', short: 'V7',
+      subtitle: 'lissajous · nº 07', index: '振 · oscillation · phase drift',
+      formula: '<em>x</em> = sin(<em>a</em>t + φ) &nbsp;·&nbsp; <em>y</em> = sin(<em>b</em>t)',
+      params: [
+        {key:'a',     sym:'a', label:'a freq',  ja:'甲', min:1,  max:12,  step:0.01,  value:3,        fmt:v=>v.toFixed(2)},
+        {key:'b',     sym:'b', label:'b freq',  ja:'乙', min:1,  max:12,  step:0.01,  value:Math.PI,  fmt:v=>v.toFixed(3)},
+        {key:'scale', sym:'s', label:'scale',   ja:'寸', min:50, max:400, step:1,     value:300,      fmt:v=>v.toFixed(0)},
+        {key:'speed', sym:'ω', label:'φ drift', ja:'速', min:-1, max:1,   step:0.001, value:0.15,     fmt:v=>v.toFixed(3)},
+      ],
+      setup(s) { s.phi = 0; },
+      tick(s, dt, p) { s.phi += p.speed * dt; },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const cx = W/2, cy = H/2;
+        const safeR = Math.min(W, H) * 0.44;
+        const sc = Math.min(p.scale, safeR);
+        const pts = [];
+        const steps = 5000;
+        for (let i = 0; i <= steps; i++) {
+          const t = (i / steps) * Math.PI * 2;
+          pts.push(cx + sc * Math.sin(p.a * t + s.phi), cy + sc * Math.sin(p.b * t));
+        }
+        multiPassStroke(ctx, pts);
+      },
+    });
+
+    // V8 · Harmonograph ------------------------------------------------
+    VIZ.push({
+      id: 'harmono', ja: '響', short: 'V8',
+      subtitle: 'harmonograph · nº 08', index: '響 · pendulum · victorian',
+      formula: '<em>x</em>(t) = Σ A·sin(<em>fᵢ</em>t + pᵢ)e^(−<em>δ</em>t) &nbsp;·&nbsp; (similarly y)',
+      params: [
+        {key:'f1',    sym:'f₁', label:'f1',       ja:'一', min:1,    max:8,    step:0.001,  value:3,     fmt:v=>v.toFixed(3)},
+        {key:'f2',    sym:'f₂', label:'f2',       ja:'二', min:1,    max:8,    step:0.001,  value:2,     fmt:v=>v.toFixed(3)},
+        {key:'f3',    sym:'f₃', label:'f3',       ja:'三', min:1,    max:8,    step:0.001,  value:3.01,  fmt:v=>v.toFixed(3)},
+        {key:'f4',    sym:'f₄', label:'f4',       ja:'四', min:1,    max:8,    step:0.001,  value:2,     fmt:v=>v.toFixed(3)},
+        {key:'damp',  sym:'δ',  label:'damping',  ja:'減', min:0,    max:0.05, step:0.0001, value:0.004, fmt:v=>v.toFixed(4)},
+        {key:'scale', sym:'s',  label:'scale',    ja:'寸', min:50,   max:400,  step:1,      value:160,   fmt:v=>v.toFixed(0)},
+        {key:'speed', sym:'ω',  label:'f₁ drift', ja:'速', min:-0.1, max:0.1,  step:0.0001, value:0.005, fmt:v=>v.toFixed(4)},
+      ],
+      setup(s) { s.drift = 0; },
+      tick(s, dt, p) { s.drift += p.speed * dt; },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const cx = W/2, cy = H/2;
+        const TM = 80, steps = 8000;
+        const f1 = p.f1 + s.drift;
+        const pts = [];
+        for (let i = 0; i <= steps; i++) {
+          const t = (i / steps) * TM;
+          const damp = Math.exp(-p.damp * t);
+          const x = p.scale * (Math.sin(f1 * t) + Math.sin(p.f2 * t + 1.3)) * damp / 2;
+          const y = p.scale * (Math.sin(p.f3 * t + 0.7) + Math.sin(p.f4 * t)) * damp / 2;
+          pts.push(x, y);
+        }
+        fitAndTranslate(pts, cx, cy, W, H);
+        multiPassStroke(ctx, pts);
+      },
+    });
+
+    // V9 · Clifford attractor ------------------------------------------
+    VIZ.push({
+      id: 'clifford', ja: '雲', short: 'V9',
+      subtitle: 'clifford · nº 09', index: '雲 · attractor · smoke',
+      formula: '<em>xₙ₊₁</em> = sin(<em>a</em>·y) + <em>c</em>·cos(<em>a</em>·x) &nbsp;·&nbsp; <em>yₙ₊₁</em> = sin(<em>b</em>·x) + <em>d</em>·cos(<em>b</em>·y)',
+      params: [
+        {key:'a',     sym:'a', label:'a',        ja:'甲', min:-2,    max:2,      step:0.001,   value:-1.4,  fmt:v=>v.toFixed(3)},
+        {key:'b',     sym:'b', label:'b',        ja:'乙', min:-2,    max:2,      step:0.001,   value:1.6,   fmt:v=>v.toFixed(3)},
+        {key:'c',     sym:'c', label:'c',        ja:'丙', min:-2,    max:2,      step:0.001,   value:1.0,   fmt:v=>v.toFixed(3)},
+        {key:'d',     sym:'d', label:'d',        ja:'丁', min:-2,    max:2,      step:0.001,   value:0.7,   fmt:v=>v.toFixed(3)},
+        {key:'scale', sym:'s', label:'scale',    ja:'寸', min:50,    max:400,    step:1,       value:180,   fmt:v=>v.toFixed(0)},
+        {key:'iter',  sym:'N', label:'iter/frame',ja:'数',min:5000,  max:200000, step:1000,    value:80000, fmt:v=>v.toFixed(0)},
+        {key:'fade',  sym:'φ', label:'trail',    ja:'尾', min:0,     max:0.2,    step:0.001,   value:0.015, fmt:v=>v.toFixed(3)},
+        {key:'drift', sym:'ω', label:'param drift',ja:'速',min:0,    max:0.005,  step:0.00001, value:0.0006,fmt:v=>v.toFixed(5)},
+      ],
+      setup(s) { s.x = 0.1; s.y = 0.1; s.tdrift = 0; },
+      tick(s, dt, p) { s.tdrift += p.drift * dt; },
+      draw(ctx, s, W, H, p) {
+        const cx = W/2, cy = H/2;
+        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
+        ctx.fillRect(0, 0, W, H);
+        const safeR = Math.min(W, H) * 0.44;
+        const sc = Math.min(p.scale, safeR / 2);
+        const a = p.a + Math.sin(s.tdrift) * 0.06;
+        const b = p.b + Math.cos(s.tdrift * 1.3) * 0.06;
+        let x = s.x, y = s.y;
+        const N = Math.floor(p.iter);
+        ctx.fillStyle = 'rgba(245, 240, 230, 0.07)';
+        for (let i = 0; i < N; i++) {
+          const xn = Math.sin(a * y) + p.c * Math.cos(a * x);
+          const yn = Math.sin(b * x) + p.d * Math.cos(b * y);
+          x = xn; y = yn;
+          ctx.fillRect(cx + x * sc, cy + y * sc, 1, 1);
+        }
+        s.x = x; s.y = y;
+      },
+    });
+
+    // V10 · De Jong attractor -----------------------------------------
+    VIZ.push({
+      id: 'dejong', ja: '紗', short: 'V10',
+      subtitle: 'de jong · nº 10', index: '紗 · attractor · gauze',
+      formula: '<em>xₙ₊₁</em> = sin(<em>a</em>·y) − cos(<em>b</em>·x) &nbsp;·&nbsp; <em>yₙ₊₁</em> = sin(<em>c</em>·x) − cos(<em>d</em>·y)',
+      params: [
+        {key:'a',     sym:'a', label:'a',          ja:'甲', min:-3,   max:3,      step:0.001,   value:1.4,   fmt:v=>v.toFixed(3)},
+        {key:'b',     sym:'b', label:'b',          ja:'乙', min:-3,   max:3,      step:0.001,   value:-2.3,  fmt:v=>v.toFixed(3)},
+        {key:'c',     sym:'c', label:'c',          ja:'丙', min:-3,   max:3,      step:0.001,   value:2.4,   fmt:v=>v.toFixed(3)},
+        {key:'d',     sym:'d', label:'d',          ja:'丁', min:-3,   max:3,      step:0.001,   value:-2.1,  fmt:v=>v.toFixed(3)},
+        {key:'scale', sym:'s', label:'scale',      ja:'寸', min:50,   max:400,    step:1,       value:130,   fmt:v=>v.toFixed(0)},
+        {key:'iter',  sym:'N', label:'iter/frame', ja:'数', min:5000, max:200000, step:1000,    value:80000, fmt:v=>v.toFixed(0)},
+        {key:'fade',  sym:'φ', label:'trail',      ja:'尾', min:0,    max:0.2,    step:0.001,   value:0.015, fmt:v=>v.toFixed(3)},
+        {key:'drift', sym:'ω', label:'param drift',ja:'速', min:0,    max:0.005,  step:0.00001, value:0.0005,fmt:v=>v.toFixed(5)},
+      ],
+      setup(s) { s.x = 0.1; s.y = 0.1; s.tdrift = 0; },
+      tick(s, dt, p) { s.tdrift += p.drift * dt; },
+      draw(ctx, s, W, H, p) {
+        const cx = W/2, cy = H/2;
+        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
+        ctx.fillRect(0, 0, W, H);
+        const safeR = Math.min(W, H) * 0.44;
+        const sc = Math.min(p.scale, safeR / 3);
+        const a = p.a + Math.sin(s.tdrift) * 0.08;
+        const b = p.b + Math.cos(s.tdrift * 1.3) * 0.08;
+        let x = s.x, y = s.y;
+        const N = Math.floor(p.iter);
+        ctx.fillStyle = 'rgba(245, 240, 230, 0.07)';
+        for (let i = 0; i < N; i++) {
+          const xn = Math.sin(a * y) - Math.cos(b * x);
+          const yn = Math.sin(p.c * x) - Math.cos(p.d * y);
+          x = xn; y = yn;
+          ctx.fillRect(cx + x * sc, cy + y * sc, 1, 1);
+        }
+        s.x = x; s.y = y;
+      },
+    });
+
+    // V11 · Aizawa (3D, rotating projection) ---------------------------
+    VIZ.push({
+      id: 'aizawa', ja: '軸', short: 'V11',
+      subtitle: 'aizawa · nº 11', index: '軸 · 3D attractor · projected',
+      formula: 'ẋ=(z−<em>b</em>)x−<em>d</em>y &nbsp; ẏ=<em>d</em>x+(z−<em>b</em>)y &nbsp; ż=<em>c</em>+<em>a</em>z−z³/3−(x²+y²)(1+<em>e</em>z)+<em>f</em>zx³',
+      params: [
+        {key:'a',     sym:'a', label:'a',          ja:'甲', min:0.1,  max:1.5,  step:0.001, value:0.95,  fmt:v=>v.toFixed(3)},
+        {key:'b',     sym:'b', label:'b',          ja:'乙', min:0.1,  max:1.5,  step:0.001, value:0.7,   fmt:v=>v.toFixed(3)},
+        {key:'c',     sym:'c', label:'c',          ja:'丙', min:0.1,  max:1.5,  step:0.001, value:0.6,   fmt:v=>v.toFixed(3)},
+        {key:'d',     sym:'d', label:'d',          ja:'丁', min:1,    max:5,    step:0.01,  value:3.5,   fmt:v=>v.toFixed(2)},
+        {key:'e',     sym:'e', label:'e',          ja:'戊', min:0.1,  max:1,    step:0.001, value:0.25,  fmt:v=>v.toFixed(3)},
+        {key:'f',     sym:'f', label:'f',          ja:'己', min:0.05, max:0.3,  step:0.001, value:0.1,   fmt:v=>v.toFixed(3)},
+        {key:'scale', sym:'s', label:'scale',      ja:'寸', min:50,   max:400,  step:1,     value:200,   fmt:v=>v.toFixed(0)},
+        {key:'rot',   sym:'ω', label:'rotate',     ja:'廻', min:-0.5, max:0.5,  step:0.001, value:0.12,  fmt:v=>v.toFixed(3)},
+        {key:'iter',  sym:'N', label:'iter/frame', ja:'数', min:200,  max:5000, step:50,    value:1500,  fmt:v=>v.toFixed(0)},
+        {key:'fade',  sym:'φ', label:'trail',      ja:'尾', min:0,    max:0.1,  step:0.001, value:0.01,  fmt:v=>v.toFixed(3)},
+      ],
+      setup(s) { s.x = 0.1; s.y = 0; s.z = 0; s.theta = 0; },
+      tick(s, dt, p) { s.theta += p.rot * dt; },
+      draw(ctx, s, W, H, p) {
+        const cx = W/2, cy = H/2;
+        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
+        ctx.fillRect(0, 0, W, H);
+        const safeR = Math.min(W, H) * 0.44;
+        const sc = Math.min(p.scale, safeR / 2.2);
+        const cR = Math.cos(s.theta), sR = Math.sin(s.theta);
+        let x = s.x, y = s.y, z = s.z;
+        const N = Math.floor(p.iter);
+        const h = 0.01;
+        ctx.fillStyle = 'rgba(245, 240, 230, 0.4)';
+        for (let i = 0; i < N; i++) {
+          const dx = (z - p.b) * x - p.d * y;
+          const dy = p.d * x + (z - p.b) * y;
+          const dz = p.c + p.a * z - z*z*z/3 - (x*x + y*y) * (1 + p.e * z) + p.f * z * x*x*x;
+          x += dx * h; y += dy * h; z += dz * h;
+          const xr = x * cR + z * sR;
+          ctx.fillRect(cx + xr * sc, cy + y * sc, 1, 1);
+        }
+        s.x = x; s.y = y; s.z = z;
+      },
+    });
+
+    // V12 · Chladni (float modes) --------------------------------------
+    VIZ.push({
+      id: 'chladni', ja: '波', short: 'V12',
+      subtitle: 'chladni · nº 12', index: '波 · standing waves · float modes',
+      formula: '<em>z</em>(x,y) = sin(<em>n</em>πx)sin(<em>m</em>πy) + sin(<em>m</em>πx)sin(<em>n</em>πy)',
+      params: [
+        {key:'n',      sym:'n', label:'n mode',  ja:'一', min:1,    max:8,   step:0.01,  value:3,    fmt:v=>v.toFixed(2)},
+        {key:'m',      sym:'m', label:'m mode',  ja:'二', min:1,    max:8,   step:0.01,  value:5,    fmt:v=>v.toFixed(2)},
+        {key:'grid',   sym:'g', label:'grid',    ja:'格', min:60,   max:240, step:1,     value:140,  fmt:v=>v.toFixed(0)},
+        {key:'thresh', sym:'τ', label:'thresh',  ja:'境', min:0.01, max:0.3, step:0.001, value:0.06, fmt:v=>v.toFixed(3)},
+        {key:'driftN', sym:'ν', label:'n drift', ja:'動', min:-0.3, max:0.3, step:0.001, value:0.04, fmt:v=>v.toFixed(3)},
+        {key:'driftM', sym:'μ', label:'m drift', ja:'流', min:-0.3, max:0.3, step:0.001, value:0.03, fmt:v=>v.toFixed(3)},
+      ],
+      setup(s) { s.tN = 0; s.tM = 0; },
+      tick(s, dt, p) { s.tN += p.driftN * dt; s.tM += p.driftM * dt; },
+      draw(ctx, s, W, H, p) {
+        fillBg(ctx, W, H);
+        const g = Math.floor(p.grid);
+        const safeR = Math.min(W, H) * 0.44;
+        const sz = safeR * 2;
+        const offX = (W - sz) / 2;
+        const offY = (H - sz) / 2;
+        const cell = sz / g;
+        const n = p.n + s.tN, m = p.m + s.tM;
+        const thresh = p.thresh;
+        for (let i = 0; i < g; i++) {
+          const xn = i / g;
+          const sNx = Math.sin(n * Math.PI * xn);
+          const sMx = Math.sin(m * Math.PI * xn);
+          for (let j = 0; j < g; j++) {
+            const yn = j / g;
+            const z = sNx * Math.sin(m * Math.PI * yn) + sMx * Math.sin(n * Math.PI * yn);
+            const ax = z >= 0;
+            if (Math.abs(z) < thresh) ctx.fillStyle = 'rgba(245, 240, 230, 0.7)';
+            else if (ax)              ctx.fillStyle = 'rgba(193, 39, 45, 0.04)';
+            else                       ctx.fillStyle = 'rgba(176, 141, 87, 0.04)';
+            ctx.fillRect(offX + i * cell, offY + j * cell, cell + 0.5, cell + 0.5);
+          }
+        }
+      },
+    });
+
+    // V13 · Curl noise -------------------------------------------------
+    VIZ.push({
+      id: 'curl', ja: '流', short: 'V13',
+      subtitle: 'curl noise · nº 13', index: '流 · ink in water · curl field',
+      formula: '<em>v</em> = (∂<em>n</em>/∂y, −∂<em>n</em>/∂x) &nbsp;·&nbsp; <em>n</em> = noise(x, y, t)',
+      params: [
+        {key:'particles', sym:'N', label:'particles', ja:'粒', min:500,   max:15000, step:100,    value:4500,  fmt:v=>v.toFixed(0)},
+        {key:'freq',      sym:'f', label:'freq',      ja:'周', min:0.001, max:0.02,  step:0.0001, value:0.004, fmt:v=>v.toFixed(4)},
+        {key:'speed',     sym:'v', label:'flow',      ja:'速', min:0.1,   max:4,     step:0.01,   value:1.4,   fmt:v=>v.toFixed(2)},
+        {key:'tDrift',    sym:'ω', label:'t drift',   ja:'時', min:0,     max:0.5,   step:0.001,  value:0.08,  fmt:v=>v.toFixed(3)},
+        {key:'fade',      sym:'φ', label:'trail',     ja:'尾', min:0.005, max:0.2,   step:0.001,  value:0.04,  fmt:v=>v.toFixed(3)},
+      ],
+      setup(s, W, H) {
+        s.t = 0;
+        s.particles = [];
+        for (let i = 0; i < 15000; i++) {
+          s.particles.push({ x: Math.random() * W, y: Math.random() * H });
+        }
+      },
+      tick(s, dt, p) { s.t += p.tDrift * dt; },
+      draw(ctx, s, W, H, p) {
+        ctx.fillStyle = `rgba(5, 4, 3, ${p.fade})`;
+        ctx.fillRect(0, 0, W, H);
+        const N = Math.min(Math.floor(p.particles), s.particles.length);
+        const f = p.freq, t = s.t;
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.18)';
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        const ep = 0.6;
+        for (let i = 0; i < N; i++) {
+          const pt = s.particles[i];
+          const nXp = noise2(pt.x*f + ep, pt.y*f, t);
+          const nXm = noise2(pt.x*f - ep, pt.y*f, t);
+          const nYp = noise2(pt.x*f, pt.y*f + ep, t);
+          const nYm = noise2(pt.x*f, pt.y*f - ep, t);
+          const dx = (nYp - nYm) * 0.5;
+          const dy = -(nXp - nXm) * 0.5;
+          ctx.moveTo(pt.x, pt.y);
+          pt.x += dx * p.speed * 60;
+          pt.y += dy * p.speed * 60;
+          if (pt.x < 0) pt.x += W; else if (pt.x > W) pt.x -= W;
+          if (pt.y < 0) pt.y += H; else if (pt.y > H) pt.y -= H;
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+      },
+    });
+
+    // V14 · Gray-Scott reaction-diffusion ------------------------------
+    VIZ.push({
+      id: 'rd', ja: '化', short: 'V14',
+      subtitle: 'gray-scott · nº 14', index: '化 · reaction-diffusion · spots & stripes',
+      formula: '∂u/∂t = <em>Dᵤ</em>∇²u − uv² + <em>F</em>(1−u) &nbsp;·&nbsp; ∂v/∂t = <em>Dᵥ</em>∇²v + uv² − (<em>F</em>+<em>K</em>)v',
+      params: [
+        {key:'F',      sym:'F',  label:'feed',       ja:'食',  min:0.01,   max:0.1,    step:0.0001,  value:0.042,  fmt:v=>v.toFixed(4)},
+        {key:'K',      sym:'K',  label:'kill',       ja:'殺',  min:0.04,   max:0.08,   step:0.0001,  value:0.061,  fmt:v=>v.toFixed(4)},
+        {key:'Du',     sym:'Dᵤ', label:'Du',         ja:'拡',  min:0.1,    max:2,      step:0.01,    value:1,      fmt:v=>v.toFixed(2)},
+        {key:'Dv',     sym:'Dᵥ', label:'Dv',         ja:'V拡', min:0.1,    max:1,      step:0.01,    value:0.5,    fmt:v=>v.toFixed(2)},
+        {key:'iter',   sym:'i',  label:'iter/frame', ja:'数',  min:1,      max:30,     step:1,       value:10,     fmt:v=>v.toFixed(0)},
+        {key:'driftF', sym:'ω',  label:'F drift',    ja:'動',  min:-0.001, max:0.001,  step:0.000001,value:0.00003,fmt:v=>v.toFixed(6)},
+      ],
+      setup(s) {
+        const gx = 140, gy = 140;
+        s.gx = gx; s.gy = gy;
+        s.u = new Float32Array(gx * gy);
+        s.v = new Float32Array(gx * gy);
+        s.u2 = new Float32Array(gx * gy);
+        s.v2 = new Float32Array(gx * gy);
+        for (let i = 0; i < gx * gy; i++) { s.u[i] = 1; s.v[i] = 0; }
+        for (let q = 0; q < 8; q++) {
+          const ccx = Math.floor(rand(gx * 0.2, gx * 0.8));
+          const ccy = Math.floor(rand(gy * 0.2, gy * 0.8));
+          for (let i = -5; i <= 5; i++) for (let j = -5; j <= 5; j++) {
+            const xx = ccx + i, yy = ccy + j;
+            if (xx >= 0 && xx < gx && yy >= 0 && yy < gy) {
+              const idx = yy * gx + xx;
+              s.u[idx] = 0.5; s.v[idx] = 0.25;
+            }
+          }
+        }
+        s.driftF = 0;
+      },
+      tick(s, dt, p) { s.driftF += p.driftF * dt; },
+      draw(ctx, s, W, H, p) {
+        const gx = s.gx, gy = s.gy;
+        const F = p.F + s.driftF, K = p.K, Du = p.Du, Dv = p.Dv;
+        const N = Math.floor(p.iter);
+        for (let n = 0; n < N; n++) {
+          const u = s.u, v = s.v, u2 = s.u2, v2 = s.v2;
+          for (let y = 1; y < gy - 1; y++) {
+            const yo = y * gx;
+            for (let x = 1; x < gx - 1; x++) {
+              const idx = yo + x;
+              const lapU = u[idx-1] + u[idx+1] + u[idx-gx] + u[idx+gx] - 4 * u[idx];
+              const lapV = v[idx-1] + v[idx+1] + v[idx-gx] + v[idx+gx] - 4 * v[idx];
+              const uvv = u[idx] * v[idx] * v[idx];
+              u2[idx] = u[idx] + Du * lapU - uvv + F * (1 - u[idx]);
+              v2[idx] = v[idx] + Dv * lapV + uvv - (F + K) * v[idx];
+            }
+          }
+          const tmpU = s.u, tmpV = s.v;
+          s.u = s.u2; s.v = s.v2; s.u2 = tmpU; s.v2 = tmpV;
+        }
+        fillBg(ctx, W, H);
+        const safeR = Math.min(W, H) * 0.44;
+        const sz = safeR * 2;
+        const offX = (W - sz) / 2;
+        const offY = (H - sz) / 2;
+        const cell = sz / gx;
+        const vBuf = s.v;
+        for (let y = 0; y < gy; y++) {
+          const yo = y * gx;
+          for (let x = 0; x < gx; x++) {
+            const val = vBuf[yo + x];
+            if (val > 0.05) {
+              const a = Math.min(1, val * 3);
+              ctx.fillStyle = `rgba(245, 240, 230, ${a})`;
+              ctx.fillRect(offX + x * cell, offY + y * cell, cell + 0.5, cell + 0.5);
+            }
+          }
+        }
+      },
+    });
+
+    // ════════════════════════════════════════════════════════════════════
+    // FRAMEWORK
+    // ════════════════════════════════════════════════════════════════════
+    let activeViz = null;
+    let activeId = null;
+    let currentParams = {};
+    const stateMap = {};
+    let paused = false;
+    let lastFrameT = performance.now();
+    let frameCount = 0, lastFpsT = performance.now();
+
+    function buildTabs() {
+      const nav = document.getElementById('tab-nav');
+      nav.innerHTML = '';
+      VIZ.forEach((v, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab';
+        btn.type = 'button';
+        btn.dataset.vizId = v.id;
+        btn.innerHTML = `<span class="ver">${v.short}</span><span class="ja">${v.ja}</span>`;
+        btn.addEventListener('click', () => activate(v.id));
+        nav.appendChild(btn);
+        if (idx < VIZ.length - 1) {
+          const sep = document.createElement('span');
+          sep.className = 'tab-sep';
+          nav.appendChild(sep);
+        }
+      });
+    }
+
+    function renderSliders(viz) {
+      const container = document.getElementById('dynamic-sliders');
+      container.innerHTML = '';
+      viz.params.forEach(p => {
+        const group = document.createElement('div');
+        group.className = 'slider-group';
+        group.innerHTML = `
+          <div class="slider-label">
+            <span class="name"><span class="sym">${p.sym}</span> ${p.label} <span class="ja">${p.ja}</span></span>
+            <span class="value" data-readout="${p.key}">${p.fmt(currentParams[p.key])}</span>
+          </div>
+          <input type="range" data-slider="${p.key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${currentParams[p.key]}">
+        `;
+        container.appendChild(group);
+        const input = group.querySelector('input');
+        input.addEventListener('input', e => {
+          currentParams[p.key] = parseFloat(e.target.value);
+          group.querySelector('[data-readout]').textContent = p.fmt(currentParams[p.key]);
+        });
+      });
+    }
+
+    function syncSliderValues() {
+      if (!activeViz) return;
+      activeViz.params.forEach(p => {
+        const slider  = document.querySelector(`[data-slider="${p.key}"]`);
+        const readout = document.querySelector(`[data-readout="${p.key}"]`);
+        if (slider)  slider.value = currentParams[p.key];
+        if (readout) readout.textContent = p.fmt(currentParams[p.key]);
+      });
+    }
+
+    function activate(vizId) {
+      const viz = VIZ.find(v => v.id === vizId);
+      if (!viz) return;
+      activeViz = viz;
+      activeId = vizId;
+      currentParams = {};
+      viz.params.forEach(p => { currentParams[p.key] = p.value; });
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.vizId === vizId);
+      });
+      document.getElementById('subtitle').textContent = viz.subtitle;
+      document.getElementById('index').textContent    = viz.index;
+      document.getElementById('formula').innerHTML    = viz.formula || '';
+      stateMap[vizId] = {};
+      if (viz.setup) viz.setup(stateMap[vizId], W, H, currentParams);
+      renderSliders(viz);
+      fillBg(ctx, W, H);
+      document.getElementById('active-name').textContent = `${viz.short} · ${viz.ja}`;
+    }
+
+    function render() {
+      const tNow = performance.now();
+      const dt = Math.min(0.1, (tNow - lastFrameT) / 1000);
+      lastFrameT = tNow;
+      if (activeViz) {
+        if (!paused && activeViz.tick) activeViz.tick(stateMap[activeId], dt, currentParams);
+        activeViz.draw(ctx, stateMap[activeId], W, H, currentParams);
+      }
+      frameCount++;
+      if (tNow - lastFpsT > 500) {
+        document.getElementById('fps').textContent = Math.round(frameCount * 1000 / (tNow - lastFpsT));
+        frameCount = 0; lastFpsT = tNow;
+      }
+      requestAnimationFrame(render);
+    }
+
+    // ─────────────────────────── Boot ───────────────────────────
+    buildTabs();
+    resize();
+    activate('v3');
+    requestAnimationFrame(render);
 
     document.getElementById('reset').addEventListener('click', () => {
-      Object.assign(params, defaults);
-      phase = 0;
-      growthT = (mode === 'v2') ? 0 : params.tmax;
-      if (mode === 'v3') initDrift();
-      syncReadouts();
+      if (activeViz) activate(activeId);
     });
-
-    document.getElementById('regrow').addEventListener('click', () => {
-      growthT = 0;
-    });
-
     const pauseBtn = document.getElementById('pause');
     pauseBtn.addEventListener('click', () => {
       paused = !paused;
       pauseBtn.textContent = paused ? 'play' : 'pause';
     });
 
-    // Tab switching
-    const subtitleEl = document.getElementById('subtitle');
-    const indexEl    = document.getElementById('index');
-    const modeMeta = {
-      v1: { subtitle: 'parametric study · nº 01', index: '渦 · spiral · vortex' },
-      v2: { subtitle: 'germination study · nº 02', index: '種 · seed · unfurling' },
-      v3: { subtitle: 'drift study · nº 03',        index: '夢 · dream · self-modulating' },
-    };
-    function activateMode(newMode) {
-      document.querySelectorAll('.tab').forEach(b =>
-        b.classList.toggle('active', b.dataset.mode === newMode)
-      );
-      mode = newMode;
-      document.body.classList.toggle('mode-v1', mode === 'v1');
-      document.body.classList.toggle('mode-v2', mode === 'v2');
-      document.body.classList.toggle('mode-v3', mode === 'v3');
-      subtitleEl.textContent = modeMeta[mode].subtitle;
-      indexEl.textContent    = modeMeta[mode].index;
-      if (mode === 'v2')      growthT = 0;
-      else if (mode === 'v3') initDrift();   // initDrift resets growthT + drift
-      else                    growthT = params.tmax;
-    }
-    document.querySelectorAll('.tab').forEach(btn => {
-      btn.addEventListener('click', () => activateMode(btn.dataset.mode));
-    });
-
-    syncReadouts();
-    activateMode('v3');   // land on the dream
-
-    let frameCount = 0, lastFpsT = performance.now();
-    let lastFrameT = performance.now();
-    const fpsEl = document.getElementById('fps');
-    const samplesEl = document.getElementById('samples');
-    const phaseEl = document.getElementById('phaseval');
-    const driftValEl = document.getElementById('driftval');
-
-    function draw() {
-      const W = canvas.width / DPR, H = canvas.height / DPR;
-
-      // Full clear with a near-black wash (a touch of warmth)
-      ctx.fillStyle = '#050403';
-      ctx.fillRect(0, 0, W, H);
-
-      const cx = W / 2, cy = H / 2;
-
-      // time delta (used by both V2 growth and V3 drift)
-      const tNowFrame = performance.now();
-      const dtFrame = Math.min(0.1, (tNowFrame - lastFrameT) / 1000);
-
-      // V3: drift parameters toward new random targets
-      if (mode === 'v3' && !paused) driftTick(dtFrame);
-
-      const { kappa, power, divisor, coeff, tmax, scale } = params;
-
-      // V2: grow once toward tmax.  V3: full grow/steady/unwind cycle.
-      const usesGrowth = (mode === 'v2' || mode === 'v3');
-      if (!paused) {
-        if (mode === 'v2' && growthT < tmax) {
-          const growRate = tmax / Math.max(0.1, params.growth);
-          growthT = Math.min(tmax, growthT + growRate * dtFrame);
-        } else if (mode === 'v3') {
-          cycleTick(dtFrame);
-        }
-      }
-      const tCap = usesGrowth ? growthT : tmax;
-      // Tip glow during anything that isn't "steady at full extent"
-      const isGrowing =
-        (mode === 'v2' && growthT < tmax) ||
-        (mode === 'v3' && cyclePhase !== 'steady');
-
-      // adaptive sampling — keep roughly 5–6k points regardless of tmax
-      const targetSamples = 5500;
-      const step = Math.max(0.02, tmax / targetSamples);
-
-      // Generate points centered on (0,0), track bounding distance
-      const pts = [];
-      let maxDist = 0;
-      for (let t = 0; t < tCap; t += step) {
-        const r = Math.pow(t, power) / (t + divisor);
-        const inner = Math.sin((kappa + phase) * t);
-        const theta = coeff * t + Math.sin(coeff * t * inner);
-        const x = scale * r * Math.cos(theta);
-        const y = scale * r * Math.sin(theta);
-        pts.push(x, y);
-        const d = (Math.abs(x) > Math.abs(y) ? Math.abs(x) : Math.abs(y));
-        if (d > maxDist) maxDist = d;
-      }
-
-      // Auto-fit so the spiral always sits inside the viewport
-      const safeRadius = Math.min(W, H) * 0.44;
-      const fit = (maxDist > safeRadius && maxDist > 0) ? safeRadius / maxDist : 1;
-
-      // Translate to canvas center, applying fit factor
-      for (let i = 0; i < pts.length; i += 2) {
-        pts[i]   = cx + pts[i]   * fit;
-        pts[i+1] = cy + pts[i+1] * fit;
-      }
-
-      function strokePath(strokeStyle, lineWidth) {
-        if (pts.length < 4) return;
-        ctx.strokeStyle = strokeStyle;
-        ctx.lineWidth = lineWidth;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(pts[0], pts[1]);
-        for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i+1]);
-        ctx.stroke();
-      }
-
-      // outer cinnabar bloom
-      strokePath('rgba(193, 39, 45, 0.07)', 5);
-      // mid gold haze
-      strokePath('rgba(176, 141, 87, 0.16)', 1.8);
-      // soft bone halo
-      strokePath('rgba(245, 240, 230, 0.22)', 1.1);
-      // crisp bone core
-      strokePath('rgba(245, 240, 230, 0.95)', 0.55);
-
-      // V2 + V3: the seed/tip — a luminous dot at the current growth front
-      if (usesGrowth) {
-        let tipX, tipY;
-        if (pts.length >= 2) {
-          tipX = pts[pts.length - 2];
-          tipY = pts[pts.length - 1];
-        } else {
-          tipX = cx; tipY = cy;
-        }
-        // outer cinnabar halo
-        if (isGrowing) {
-          ctx.fillStyle = 'rgba(193, 39, 45, 0.25)';
-          ctx.beginPath();
-          ctx.arc(tipX, tipY, 14, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = 'rgba(176, 141, 87, 0.35)';
-          ctx.beginPath();
-          ctx.arc(tipX, tipY, 6, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        // bone core dot
-        ctx.fillStyle = isGrowing ? 'rgba(245, 240, 230, 1)' : 'rgba(245, 240, 230, 0.7)';
-        ctx.beginPath();
-        ctx.arc(tipX, tipY, isGrowing ? 2.2 : 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      samplesEl.textContent = (pts.length / 2).toFixed(0);
-      phaseEl.textContent = phase.toFixed(7);
-      if (mode === 'v3' && driftKeys.length) {
-        const remain = Math.max(0, driftInterval - driftElapsed);
-        const phase = cyclePhase === 'growing' ? '↗ 芽' : '↙ 還';
-        const symbols = driftKeys.map(k => DRIFT_SYMBOL[k]).join('+');
-        driftValEl.textContent = `${symbols} ${remain.toFixed(1)}s · ${phase}`;
-      }
-
-      lastFrameT = tNowFrame;
-      // params.phase is calibrated as "per-frame at 60fps" — multiply by dt*60 for framerate independence
-      if (!paused) phase += params.phase * dtFrame * 60;
-
-      frameCount++;
-      const now = performance.now();
-      if (now - lastFpsT > 500) {
-        fpsEl.textContent = Math.round(frameCount * 1000 / (now - lastFpsT));
-        frameCount = 0; lastFpsT = now;
-      }
-
-      requestAnimationFrame(draw);
-    }
-
-    requestAnimationFrame(draw);
 
     // ---------- Source modal ----------
     const codeModal = document.getElementById('code-modal');
     const codeBody  = document.getElementById('code-body');
 
-    // Highlighted via simple span wrapping. <span class="c"> = comment,
-    // .k = keyword, .s = string, .n = number. Pre-built so we keep `pre`
-    // whitespace intact.
+    // Span coloring: .c = comment, .k = keyword, .s = string, .n = number.
     const SRC_HTML = [
       '<span class="c">// ════════════════════════════════════════════════════════</span>',
-      '<span class="c">// THE UZUMAKI FORMULA · 渦巻の式</span>',
-      '<span class="c">// A parametric spiral driven by nested sines. κ governs</span>',
-      '<span class="c">// the phase beating between inner and outer cycles —</span>',
-      '<span class="c">// tiny shifts produce dramatic change at large t.</span>',
+      '<span class="c">// FRACTAL CABINET · 万華鏡</span>',
+      '<span class="c">// Each viz registers itself with params, setup, tick, draw.</span>',
+      '<span class="c">// The framework renders sliders + dispatches per active tab.</span>',
       '<span class="c">// ════════════════════════════════════════════════════════</span>',
       '',
-      '<span class="k">const</span> pts = [];',
-      '<span class="k">for</span> (<span class="k">let</span> t = <span class="n">0</span>; t &lt; tmax; t += step) {',
-      '  <span class="k">const</span> r     = Math.pow(t, power) / (t + divisor);',
-      '  <span class="k">const</span> inner = Math.sin((kappa + phase) * t);',
-      '  <span class="k">const</span> theta = coeff * t + Math.sin(coeff * t * inner);',
-      '  pts.push(cx + scale * r * Math.cos(theta));',
-      '  pts.push(cy + scale * r * Math.sin(theta));',
+      '<span class="c">// ─── Uzumaki · the nested-sine spiral ───</span>',
+      '<span class="k">const</span> r     = Math.pow(t, power) / (t + divisor);',
+      '<span class="k">const</span> inner = Math.sin((kappa + phase) * t);',
+      '<span class="k">const</span> theta = coeff * t + Math.sin(coeff * t * inner);',
+      '',
+      '<span class="c">// ─── Phyllotaxis · golden angle seed packing ───</span>',
+      '<span class="k">for</span> (<span class="k">let</span> k = <span class="n">0</span>; k &lt; N; k++) {',
+      '  <span class="k">const</span> r = c * Math.sqrt(k);',
+      '  <span class="k">const</span> a = k * psi;       <span class="c">// ψ ≈ 137.508°</span>',
       '}',
       '',
-      '<span class="c">// ─── multi-pass rendering · 四重墨 ───</span>',
-      '<span class="c">// Four overlaid strokes give a sumi-e quality:</span>',
-      '<span class="c">// cinnabar bloom · gold haze · bone halo · white core.</span>',
+      '<span class="c">// ─── Maurer rose · star-polygon procession ───</span>',
+      '<span class="k">const</span> r = scale * Math.sin(n * k * d * Math.PI / <span class="n">180</span>);',
       '',
-      '<span class="k">function</span> strokePath(color, width) {',
-      '  <span class="k">if</span> (pts.length &lt; <span class="n">4</span>) <span class="k">return</span>;',
-      '  ctx.strokeStyle = color;',
-      '  ctx.lineWidth = width;',
-      '  ctx.lineJoin = <span class="s">\'round\'</span>;',
-      '  ctx.beginPath();',
-      '  ctx.moveTo(pts[<span class="n">0</span>], pts[<span class="n">1</span>]);',
-      '  <span class="k">for</span> (<span class="k">let</span> i = <span class="n">2</span>; i &lt; pts.length; i += <span class="n">2</span>)',
-      '    ctx.lineTo(pts[i], pts[i + <span class="n">1</span>]);',
-      '  ctx.stroke();',
-      '}',
+      '<span class="c">// ─── Superformula (Gielis) · k-fold symmetry ───</span>',
+      '<span class="k">const</span> r = Math.pow(',
+      '  Math.pow(Math.abs(Math.cos(m*θ/<span class="n">4</span>)), n2)',
+      '+ Math.pow(Math.abs(Math.sin(m*θ/<span class="n">4</span>)), n3),',
+      '  -<span class="n">1</span>/n1);',
       '',
-      'strokePath(<span class="s">\'rgba(193,  39,  45, 0.07)\'</span>, <span class="n">5.0</span>);',
-      'strokePath(<span class="s">\'rgba(176, 141,  87, 0.16)\'</span>, <span class="n">1.8</span>);',
-      'strokePath(<span class="s">\'rgba(245, 240, 230, 0.22)\'</span>, <span class="n">1.1</span>);',
-      'strokePath(<span class="s">\'rgba(245, 240, 230, 0.95)\'</span>, <span class="n">0.55</span>);',
+      '<span class="c">// ─── Lissajous · phase drift ───</span>',
+      '<span class="k">const</span> x = sin(a * t + φ);',
+      '<span class="k">const</span> y = sin(b * t);',
       '',
-      '<span class="c">// ─── V2 · 種 · growth ───</span>',
-      '<span class="c">// The spiral unfurls from t = 0 outward over `growth`</span>',
-      '<span class="c">// seconds, with a luminous tip at the leading edge.</span>',
+      '<span class="c">// ─── Harmonograph · damped pendulum ───</span>',
+      '<span class="k">const</span> x = (sin(f1*t) + sin(f2*t+1.3)) * exp(-δ*t);',
       '',
-      '<span class="k">if</span> (mode === <span class="s">\'v2\'</span> &amp;&amp; !paused &amp;&amp; growthT &lt; tmax) {',
-      '  growthT += (tmax / params.growth) * dt;',
-      '}',
-      '<span class="k">const</span> tCap = (mode === <span class="s">\'v2\'</span>) ? growthT : tmax;',
+      '<span class="c">// ─── Clifford attractor · density plot ───</span>',
+      '<span class="k">const</span> xn = sin(a*y) + c*cos(a*x);',
+      '<span class="k">const</span> yn = sin(b*x) + d*cos(b*y);',
+      '<span class="c">// iterate 60-100k per frame, fade existing canvas slightly</span>',
       '',
-      '<span class="c">// ─── V3 · 夢 · drift ───</span>',
-      '<span class="c">// Every 3–12 seconds (re-rolled each tick), pick new</span>',
-      '<span class="c">// random targets for every parameter, then ease toward</span>',
-      '<span class="c">// them along a quadratic in-out curve. Endless dream.</span>',
+      '<span class="c">// ─── Aizawa 3D · RK4-ish integration, projected ───</span>',
+      '<span class="k">const</span> dx = (z-b)*x - d*y;',
+      '<span class="k">const</span> dy = d*x + (z-b)*y;',
+      '<span class="k">const</span> dz = c + a*z - z*z*z/<span class="n">3</span> - (x*x+y*y)*(<span class="n">1</span>+e*z) + f*z*x*x*x;',
       '',
-      '<span class="k">const</span> easeInOutQuad = t =&gt;',
-      '  t &lt; <span class="n">0.5</span> ? <span class="n">2</span>*t*t : <span class="n">1</span> - Math.pow(-<span class="n">2</span>*t + <span class="n">2</span>, <span class="n">2</span>) / <span class="n">2</span>;',
+      '<span class="c">// ─── Chladni · float modes ───</span>',
+      '<span class="k">const</span> z = sin(n*π*x)*sin(m*π*y) + sin(m*π*x)*sin(n*π*y);',
+      '<span class="c">// draw cells where |z| &lt; τ (the nodal lines)</span>',
       '',
-      '<span class="k">function</span> driftTick(dt) {',
-      '  driftElapsed += dt;',
-      '  <span class="k">const</span> t = Math.min(<span class="n">1</span>, driftElapsed / driftInterval);',
-      '  <span class="k">const</span> e = easeInOutQuad(t);',
+      '<span class="c">// ─── Curl noise · ink in water ───</span>',
+      '<span class="k">const</span> dx =  (noise(x, y+ε, t) - noise(x, y-ε, t)) / <span class="n">2</span>;',
+      '<span class="k">const</span> dy = -(noise(x+ε, y, t) - noise(x-ε, y, t)) / <span class="n">2</span>;',
+      '<span class="c">// advect ~5k particles, fade trails into the void</span>',
       '',
-      '  <span class="k">for</span> (<span class="k">const</span> k <span class="k">of</span> DRIFT_KEYS) {',
-      '    params[k] = driftFrom[k]',
-      '              + (driftTo[k] - driftFrom[k]) * e;',
-      '  }',
+      '<span class="c">// ─── Gray-Scott · reaction-diffusion ───</span>',
+      'u′ = u + Du * ∇²u - u*v² + F*(<span class="n">1</span>-u)',
+      'v′ = v + Dv * ∇²v + u*v² - (F+K)*v',
+      '<span class="c">// (F,K) parameter space has named regions: spots, mazes,</span>',
+      '<span class="c">// stripes, holes, U-skate world. Slowly drift F to roam.</span>',
       '',
-      '  <span class="k">if</span> (t &gt;= <span class="n">1</span>) {',
-      '    driftFrom = { ...driftTo };',
-      '    driftTo = randomDriftTarget();',
-      '    driftInterval = <span class="n">3</span> + Math.random() * <span class="n">9</span>;',
-      '    driftElapsed = <span class="n">0</span>;',
-      '  }',
-      '}',
+      '<span class="c">// ─── Multi-pass stroke (sumi-e quality) ───</span>',
+      'stroke(<span class="s">\'rgba(193,  39,  45, 0.07)\'</span>, <span class="n">5.0</span>);  <span class="c">// cinnabar bloom</span>',
+      'stroke(<span class="s">\'rgba(176, 141,  87, 0.16)\'</span>, <span class="n">1.8</span>);  <span class="c">// gold haze</span>',
+      'stroke(<span class="s">\'rgba(245, 240, 230, 0.22)\'</span>, <span class="n">1.1</span>);  <span class="c">// bone halo</span>',
+      'stroke(<span class="s">\'rgba(245, 240, 230, 0.95)\'</span>, <span class="n">0.55</span>); <span class="c">// bone core</span>',
     ].join('\n');
     codeBody.innerHTML = SRC_HTML;
 
