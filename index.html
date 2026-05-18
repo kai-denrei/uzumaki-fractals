@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=8859ef97">
+<link rel="manifest" href="./manifest.webmanifest?v=8502952d">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=8859ef97">
+<link rel="apple-touch-icon" href="./icon.svg?v=8502952d">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=8859ef97");
+    background-image: url("./noise.svg?v=8502952d");
   }
 
   body::after {
@@ -745,11 +745,11 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="8859ef97">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/08.svg?v=8859ef97">
-  <script src="./cb-badge.js?v=8859ef97" defer></script>
+  <meta name="cb" content="8502952d">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/05.svg?v=8502952d">
+  <script src="./cb-badge.js?v=8502952d" defer></script>
 </head>
-<body class="mode-v3">
+<body>
   <canvas id="canvas"></canvas>
 
   <nav class="tabs reveal reveal-1" id="tab-nav" aria-label="visualization tabs"></nav>
@@ -758,8 +758,8 @@
 
   <div class="romaji-stack reveal reveal-2">
     <div class="title">uzumaki</div>
-    <div class="subtitle" id="subtitle">drift study · nº 03</div>
-    <div class="index" id="index">夢 · dream · self-modulating</div>
+    <div class="subtitle" id="subtitle">aizawa · nº 11</div>
+    <div class="index" id="index">軸 · 3D attractor · projected</div>
     <button class="source-btn" id="open-source" type="button" aria-label="view source code">
       <span class="plus">+</span>
       <span class="lbl">source</span>
@@ -1028,16 +1028,17 @@
     // V3 · Uzumaki · drift ---------------------------------------------
     const V3_KEYS = ['kappa','power','divisor','coeff','tmax','scale','speed'];
     const V3_RANGES = {
-      kappa:   [0,        200,      4.5      ],
-      power:   [1.0,      2.4,      0.07     ],
-      divisor: [100,      2500,     70       ],
-      coeff:   [0.01,     0.3,      0.007    ],
-      tmax:    [50,       600,      26       ],
-      scale:   [30,       180,      7        ],
-      speed:   [-0.00001, 0.00001,  0.0000005],
+      kappa:   [0,        200,      6.3      ],   // ~1.4× more reach
+      power:   [1.0,      2.4,      0.10     ],
+      divisor: [100,      2500,     100      ],
+      coeff:   [0.01,     0.3,      0.010    ],
+      tmax:    [50,       600,      36       ],
+      scale:   [30,       180,      10       ],
+      speed:   [-0.00001, 0.00001,  0.0000007],
     };
     function pickV3Drift(s) {
-      const n = 2 + Math.floor(Math.random() * 2);
+      // 2, 3, or 4 knobs per cycle — more variety in what changes
+      const n = 2 + Math.floor(Math.random() * 3);
       const pool = V3_KEYS.slice();
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i+1));
@@ -1116,7 +1117,7 @@
         {key:'count', sym:'N', label:'seeds',    ja:'数', min:200,    max:3000,  step:10,      value:1500,    fmt:v=>v.toFixed(0)},
         {key:'c',     sym:'c', label:'spacing',  ja:'寸', min:3,      max:20,    step:0.1,     value:9,       fmt:v=>v.toFixed(1)},
         {key:'dot',   sym:'r', label:'dot size', ja:'粒', min:0.5,    max:4,     step:0.1,     value:1.8,     fmt:v=>v.toFixed(1)},
-        {key:'speed', sym:'ω', label:'ψ drift',  ja:'速', min:-0.01,  max:0.01,  step:0.00001, value:0.0008,  fmt:v=>v.toFixed(5)},
+        {key:'speed', sym:'ω', label:'ψ drift',  ja:'速', min:-0.01,  max:0.01,  step:0.00001, value:0.00025, fmt:v=>v.toFixed(5)},
       ],
       setup(s) { s.drift = 0; },
       tick(s, dt, p, m) { s.drift += p.speed * m * dt * 60; },
@@ -1159,7 +1160,7 @@
         {key:'n',     sym:'n', label:'petals', ja:'弁', min:2,    max:12,   step:1,     value:6,   fmt:v=>v.toFixed(0)},
         {key:'d',     sym:'d', label:'step°',  ja:'歩', min:1,    max:180,  step:0.01,  value:71,  fmt:v=>v.toFixed(2)+'°'},
         {key:'scale', sym:'s', label:'scale',  ja:'寸', min:50,   max:400,  step:1,     value:220, fmt:v=>v.toFixed(0)},
-        {key:'speed', sym:'ω', label:'d drift',ja:'速', min:-0.5, max:0.5,  step:0.001, value:0.05,fmt:v=>v.toFixed(3)},
+        {key:'speed', sym:'ω', label:'d drift',ja:'速', min:-0.5, max:0.5,  step:0.001, value:0.015, fmt:v=>v.toFixed(3)},
       ],
       setup(s) { s.drift = 0; },
       tick(s, dt, p, m) { s.drift += p.speed * m * dt; },
@@ -1394,9 +1395,9 @@
         {key:'e',     sym:'e', label:'e',          ja:'戊', min:0.1,  max:1,    step:0.001, value:0.25,  fmt:v=>v.toFixed(3)},
         {key:'f',     sym:'f', label:'f',          ja:'己', min:0.05, max:0.3,  step:0.001, value:0.1,   fmt:v=>v.toFixed(3)},
         {key:'scale', sym:'s', label:'scale',      ja:'寸', min:50,   max:400,  step:1,     value:200,   fmt:v=>v.toFixed(0)},
-        {key:'rot',   sym:'ω', label:'rotate',     ja:'廻', min:-0.5, max:0.5,  step:0.001, value:0.12,  fmt:v=>v.toFixed(3)},
+        {key:'rot',   sym:'ω', label:'rotate',     ja:'廻', min:-0.5, max:0.5,  step:0.001, value:0.05,  fmt:v=>v.toFixed(3)},
         {key:'iter',  sym:'N', label:'iter/frame', ja:'数', min:200,  max:5000, step:50,    value:1500,  fmt:v=>v.toFixed(0)},
-        {key:'fade',  sym:'φ', label:'trail',      ja:'尾', min:0,    max:0.1,  step:0.001, value:0.01,  fmt:v=>v.toFixed(3)},
+        {key:'fade',  sym:'φ', label:'trail',      ja:'尾', min:0,    max:0.2,  step:0.001, value:0.069, fmt:v=>v.toFixed(3)},
       ],
       setup(s) { s.x = 0.1; s.y = 0; s.z = 0; s.theta = 0; },
       tick(s, dt, p, m) { s.theta += p.rot * m * dt; },
@@ -1689,6 +1690,8 @@
       document.querySelectorAll('.tab').forEach(t => {
         t.classList.toggle('active', t.dataset.vizId === vizId);
       });
+      // V3 drift mode dims its sliders (they're under autonomous control)
+      document.body.classList.toggle('mode-v3', vizId === 'v3');
       document.getElementById('subtitle').textContent = viz.subtitle;
       document.getElementById('index').textContent    = viz.index;
       document.getElementById('formula').innerHTML    = viz.formula || '';
@@ -1721,7 +1724,7 @@
     // ─────────────────────────── Boot ───────────────────────────
     buildTabs();
     resize();
-    activate('v3');
+    activate('aizawa');
     requestAnimationFrame(render);
 
     document.getElementById('reset').addEventListener('click', () => {
