@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=9be7826c">
+<link rel="manifest" href="./manifest.webmanifest?v=d02cb5be">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=9be7826c">
+<link rel="apple-touch-icon" href="./icon.svg?v=d02cb5be">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink:        #0a0908;
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=9be7826c");
+    background-image: url("./noise.svg?v=d02cb5be");
   }
 
   body::after {
@@ -117,20 +117,54 @@
     width: 9rem;
   }
 
-  /* ---------- Bottom-left formula ---------- */
+  /* ---------- Top-left formula (LaTeX-style) ---------- */
   .formula {
     position: fixed;
-    bottom: 2rem;
+    top: 11.5rem;
     left: 2.75rem;
     z-index: 10;
-    font-size: 0.65rem;
-    color: var(--bone-faint);
-    letter-spacing: 0.18em;
-    line-height: 1.9;
     max-width: 22rem;
+    font-family: 'STIX Two Text', 'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--bone);
+    letter-spacing: 0;
+    user-select: none;
+    padding: 0.7rem 0.95rem 0.75rem;
+    background: rgba(5, 4, 3, 0.62);
+    backdrop-filter: blur(8px) saturate(1.05);
+    -webkit-backdrop-filter: blur(8px) saturate(1.05);
+    border: 1px solid var(--bone-faint);
+    border-left: 2px solid var(--cinnabar);
   }
-  .formula b { color: var(--bone-dim); font-weight: 400; }
-  .formula em { font-style: italic; color: var(--gold); }
+  .formula .eq {
+    display: block;
+    margin: 0.15rem 0 0.3rem;
+  }
+  .formula .eq:last-child { margin-bottom: 0; }
+  .formula i, .formula em { font-style: italic; }
+  .formula .v   { font-style: italic; color: var(--bone); }
+  .formula .g   { font-style: italic; color: var(--gold); }   /* greek */
+  .formula .op  { color: var(--bone-dim); padding: 0 0.18em; }
+  .formula .num { color: var(--bone-dim); font-style: normal; }
+  .formula .lbl { font-size: 0.7em; color: var(--bone-faint); letter-spacing: 0.18em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; display: block; margin-bottom: 0.45rem; }
+  .formula .frac {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: -0.45em;
+    text-align: center;
+    font-size: 0.86em;
+    margin: 0 0.18em;
+    line-height: 1.05;
+  }
+  .formula .frac > .n {
+    border-bottom: 1px solid var(--bone-dim);
+    padding: 0 0.35em 0.08em;
+  }
+  .formula .frac > .d { padding: 0.08em 0.35em 0; }
+  .formula sup, .formula sub { font-size: 0.62em; font-style: italic; }
+  .formula sub { vertical-align: sub; }
+  .formula sup { vertical-align: super; }
 
   /* ---------- Control panel ---------- */
   .controls {
@@ -676,9 +710,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="9be7826c">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/27.svg?v=9be7826c">
-  <script src="./cb-badge.js?v=9be7826c" defer></script>
+  <meta name="cb" content="d02cb5be">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/16.svg?v=d02cb5be">
+  <script src="./cb-badge.js?v=d02cb5be" defer></script>
 </head>
 <body class="mode-v3">
   <canvas id="canvas"></canvas>
@@ -841,16 +875,36 @@
       return pts.length >= 2 ? [pts[pts.length-2], pts[pts.length-1]] : [cx, cy];
     }
 
+    // ─────────────────── LaTeX-style formula helpers ───────────────────
+    const F = {
+      eq:   (...parts) => `<div class="eq">${parts.join('')}</div>`,
+      v:    x => `<i>${x}</i>`,
+      g:    x => `<span class="g">${x}</span>`,
+      op:   x => `<span class="op">${x}</span>`,
+      num:  x => `<span class="num">${x}</span>`,
+      lbl:  x => `<span class="lbl">${x}</span>`,
+      frac: (n, d) => `<span class="frac"><span class="n">${n}</span><span class="d">${d}</span></span>`,
+      pow:  (b, e) => `${b}<sup>${e}</sup>`,
+      sub:  (b, e) => `${b}<sub>${e}</sub>`,
+    };
+    const _ = F;        // tiny alias to keep formula strings short
+
     // ════════════════════════════════════════════════════════════════════
     // VISUALIZATION REGISTRY
     // ════════════════════════════════════════════════════════════════════
     const VIZ = [];
 
+    // The uzumaki formula is shared by V1/V2/V3 so we build it once.
+    const UZ_FORMULA =
+      _.eq(_.lbl('uzumaki · 渦巻')) +
+      _.eq(_.v('r'), '(', _.v('t'), ')', _.op('='), _.frac(_.pow(_.v('t'), _.v('p')), `${_.v('t')} + ${_.v('d')}`)) +
+      _.eq(_.g('θ'), '(', _.v('t'), ')', _.op('='), _.v('c'), _.v('t'), ' + sin(', _.v('c'), _.v('t'), ' · sin(', _.g('κ'), _.v('t'), '))');
+
     // V1 · Uzumaki · parametric ----------------------------------------
     VIZ.push({
       id: 'v1', ja: '渦', short: 'V1',
       subtitle: 'parametric · nº 01', index: '渦 · spiral · vortex',
-      formula: '<em>r</em>(<b>t</b>) = <b>t</b><em>ᵖ</em> ÷ (<b>t</b>+<em>d</em>) &nbsp;·&nbsp; <em>θ</em>(<b>t</b>) = <em>c</em><b>t</b> + sin(<em>c</em><b>t</b> · sin(<em>κ</em><b>t</b>))',
+      formula: UZ_FORMULA,
       params: [
         {key:'kappa',   sym:'κ', label:'kappa',   ja:'核', min:0,        max:200,     step:0.001,      value:83.333,  fmt:v=>v.toFixed(3)},
         {key:'power',   sym:'p', label:'power',   ja:'勢', min:0.5,      max:3,       step:0.001,      value:1.5,     fmt:v=>v.toFixed(3)},
@@ -872,7 +926,7 @@
     VIZ.push({
       id: 'v2', ja: '種', short: 'V2',
       subtitle: 'germination · nº 02', index: '種 · seed · unfurling',
-      formula: '<em>r</em>(<b>t</b>) = <b>t</b><em>ᵖ</em> ÷ (<b>t</b>+<em>d</em>) &nbsp;·&nbsp; <em>θ</em>(<b>t</b>) = <em>c</em><b>t</b> + sin(<em>c</em><b>t</b> · sin(<em>κ</em><b>t</b>))',
+      formula: UZ_FORMULA,
       params: [
         {key:'kappa',   sym:'κ', label:'kappa',     ja:'核', min:0,        max:200,     step:0.001,      value:83.333,  fmt:v=>v.toFixed(3)},
         {key:'power',   sym:'p', label:'power',     ja:'勢', min:0.5,      max:3,       step:0.001,      value:1.5,     fmt:v=>v.toFixed(3)},
@@ -928,7 +982,7 @@
     VIZ.push({
       id: 'v3', ja: '夢', short: 'V3',
       subtitle: 'drift · nº 03', index: '夢 · dream · self-modulating',
-      formula: '<em>r</em>(<b>t</b>) = <b>t</b><em>ᵖ</em> ÷ (<b>t</b>+<em>d</em>) &nbsp;·&nbsp; <em>θ</em>(<b>t</b>) = <em>c</em><b>t</b> + sin(<em>c</em><b>t</b> · sin(<em>κ</em><b>t</b>))',
+      formula: UZ_FORMULA,
       params: [
         {key:'kappa',   sym:'κ', label:'kappa',    ja:'核', min:0,        max:200,     step:0.001,      value:1.447,    fmt:v=>v.toFixed(3)},
         {key:'power',   sym:'p', label:'power',    ja:'勢', min:0.5,      max:3,       step:0.001,      value:1.934,    fmt:v=>v.toFixed(3)},
@@ -980,7 +1034,10 @@
     VIZ.push({
       id: 'phyllo', ja: '葉', short: 'V4',
       subtitle: 'phyllotaxis · nº 04', index: '葉 · seed packing · golden angle',
-      formula: '<em>r</em>(k) = <em>c</em>√k &nbsp;·&nbsp; <em>θ</em>(k) = k·<em>ψ</em> &nbsp;·&nbsp; <em>ψ</em> ≈ 137.508°',
+      formula:
+        _.eq(_.lbl('phyllotaxis · 葉')) +
+        _.eq(_.v('r'), '(', _.v('k'), ')', _.op('='), _.v('c'), '√', _.v('k')) +
+        _.eq(_.g('θ'), '(', _.v('k'), ')', _.op('='), _.v('k'), '·', _.g('ψ'), _.op(','), _.g('ψ'), ' ≈ ', _.num('137.508°')),
       params: [
         {key:'psi',   sym:'ψ', label:'angle',    ja:'角', min:130,    max:145,   step:0.001,   value:137.508, fmt:v=>v.toFixed(3)+'°'},
         {key:'count', sym:'N', label:'seeds',    ja:'数', min:200,    max:3000,  step:10,      value:1500,    fmt:v=>v.toFixed(0)},
@@ -1021,7 +1078,10 @@
     VIZ.push({
       id: 'maurer', ja: '薇', short: 'V5',
       subtitle: 'maurer rose · nº 05', index: '薇 · rose · star polygon procession',
-      formula: '<em>r</em> = sin(<em>n</em>θ) &nbsp;·&nbsp; θ = k·<em>d</em>°',
+      formula:
+        _.eq(_.lbl('maurer rose · 薇')) +
+        _.eq(_.v('r'), _.op('='), 'sin(', _.v('n'), _.g('θ'), ')') +
+        _.eq(_.g('θ'), _.op('='), _.v('k'), '·', _.v('d'), '°'),
       params: [
         {key:'n',     sym:'n', label:'petals', ja:'弁', min:2,    max:12,   step:1,     value:6,   fmt:v=>v.toFixed(0)},
         {key:'d',     sym:'d', label:'step°',  ja:'歩', min:1,    max:180,  step:0.01,  value:71,  fmt:v=>v.toFixed(2)+'°'},
@@ -1049,7 +1109,15 @@
     VIZ.push({
       id: 'super', ja: '超', short: 'V6',
       subtitle: 'superformula · nº 06', index: '超 · gielis · k-fold symmetry',
-      formula: '<em>r</em>(θ) = (|cos(<em>m</em>θ/4)|<em>ⁿ²</em> + |sin(<em>m</em>θ/4)|<em>ⁿ³</em>)<em>^(−1/n₁)</em>',
+      formula:
+        _.eq(_.lbl('superformula · gielis · 超')) +
+        _.eq(
+          _.v('r'), '(', _.g('θ'), ')', _.op('='),
+          _.pow(
+            `( |cos(${_.v('m')}${_.g('θ')}/${_.num('4')})|${_.pow('', _.v('n')+_.num('₂'))} + |sin(${_.v('m')}${_.g('θ')}/${_.num('4')})|${_.pow('', _.v('n')+_.num('₃'))} )`,
+            `−1/${_.v('n')}${_.num('₁')}`
+          )
+        ),
       params: [
         {key:'m',     sym:'m',  label:'symmetry', ja:'対', min:0,    max:14,  step:0.01,  value:5,    fmt:v=>v.toFixed(2)},
         {key:'n1',    sym:'n₁', label:'n1',       ja:'一', min:0.1,  max:8,   step:0.01,  value:1.2,  fmt:v=>v.toFixed(2)},
@@ -1083,7 +1151,10 @@
     VIZ.push({
       id: 'lissajous', ja: '振', short: 'V7',
       subtitle: 'lissajous · nº 07', index: '振 · oscillation · phase drift',
-      formula: '<em>x</em> = sin(<em>a</em>t + φ) &nbsp;·&nbsp; <em>y</em> = sin(<em>b</em>t)',
+      formula:
+        _.eq(_.lbl('lissajous · 振')) +
+        _.eq(_.v('x'), _.op('='), 'sin(', _.v('a'), _.v('t'), ' + ', _.g('φ'), ')') +
+        _.eq(_.v('y'), _.op('='), 'sin(', _.v('b'), _.v('t'), ')'),
       params: [
         {key:'a',     sym:'a', label:'a freq',  ja:'甲', min:1,  max:12,  step:0.01,  value:3,        fmt:v=>v.toFixed(2)},
         {key:'b',     sym:'b', label:'b freq',  ja:'乙', min:1,  max:12,  step:0.01,  value:Math.PI,  fmt:v=>v.toFixed(3)},
@@ -1111,7 +1182,14 @@
     VIZ.push({
       id: 'harmono', ja: '響', short: 'V8',
       subtitle: 'harmonograph · nº 08', index: '響 · pendulum · victorian',
-      formula: '<em>x</em>(t) = Σ A·sin(<em>fᵢ</em>t + pᵢ)e^(−<em>δ</em>t) &nbsp;·&nbsp; (similarly y)',
+      formula:
+        _.eq(_.lbl('harmonograph · 響')) +
+        _.eq(
+          _.v('x'), '(', _.v('t'), ')', _.op('='),
+          'Σ ', _.v('A'), _.sub(_.v('i'), ''), ' sin(', _.v('f'), _.sub('', _.v('i')), _.v('t'), ' + ', _.v('p'), _.sub('', _.v('i')), ')',
+          _.pow('e', '−' + _.g('δ') + _.v('t'))
+        ) +
+        _.eq(_.lbl('(similarly for y, independent frequencies)')),
       params: [
         {key:'f1',    sym:'f₁', label:'f1',       ja:'一', min:1,    max:8,    step:0.001,  value:3,     fmt:v=>v.toFixed(3)},
         {key:'f2',    sym:'f₂', label:'f2',       ja:'二', min:1,    max:8,    step:0.001,  value:2,     fmt:v=>v.toFixed(3)},
@@ -1145,7 +1223,10 @@
     VIZ.push({
       id: 'clifford', ja: '雲', short: 'V9',
       subtitle: 'clifford · nº 09', index: '雲 · attractor · smoke',
-      formula: '<em>xₙ₊₁</em> = sin(<em>a</em>·y) + <em>c</em>·cos(<em>a</em>·x) &nbsp;·&nbsp; <em>yₙ₊₁</em> = sin(<em>b</em>·x) + <em>d</em>·cos(<em>b</em>·y)',
+      formula:
+        _.eq(_.lbl('clifford attractor · 雲')) +
+        _.eq(_.sub(_.v('x'), _.v('n')+'+1'), _.op('='), 'sin(', _.v('a'), _.v('y'), ') + ', _.v('c'), ' cos(', _.v('a'), _.v('x'), ')') +
+        _.eq(_.sub(_.v('y'), _.v('n')+'+1'), _.op('='), 'sin(', _.v('b'), _.v('x'), ') + ', _.v('d'), ' cos(', _.v('b'), _.v('y'), ')'),
       params: [
         {key:'a',     sym:'a', label:'a',        ja:'甲', min:-2,    max:2,      step:0.001,   value:-1.4,  fmt:v=>v.toFixed(3)},
         {key:'b',     sym:'b', label:'b',        ja:'乙', min:-2,    max:2,      step:0.001,   value:1.6,   fmt:v=>v.toFixed(3)},
@@ -1183,7 +1264,10 @@
     VIZ.push({
       id: 'dejong', ja: '紗', short: 'V10',
       subtitle: 'de jong · nº 10', index: '紗 · attractor · gauze',
-      formula: '<em>xₙ₊₁</em> = sin(<em>a</em>·y) − cos(<em>b</em>·x) &nbsp;·&nbsp; <em>yₙ₊₁</em> = sin(<em>c</em>·x) − cos(<em>d</em>·y)',
+      formula:
+        _.eq(_.lbl('de jong attractor · 紗')) +
+        _.eq(_.sub(_.v('x'), _.v('n')+'+1'), _.op('='), 'sin(', _.v('a'), _.v('y'), ') − cos(', _.v('b'), _.v('x'), ')') +
+        _.eq(_.sub(_.v('y'), _.v('n')+'+1'), _.op('='), 'sin(', _.v('c'), _.v('x'), ') − cos(', _.v('d'), _.v('y'), ')'),
       params: [
         {key:'a',     sym:'a', label:'a',          ja:'甲', min:-3,   max:3,      step:0.001,   value:1.4,   fmt:v=>v.toFixed(3)},
         {key:'b',     sym:'b', label:'b',          ja:'乙', min:-3,   max:3,      step:0.001,   value:-2.3,  fmt:v=>v.toFixed(3)},
@@ -1221,7 +1305,16 @@
     VIZ.push({
       id: 'aizawa', ja: '軸', short: 'V11',
       subtitle: 'aizawa · nº 11', index: '軸 · 3D attractor · projected',
-      formula: 'ẋ=(z−<em>b</em>)x−<em>d</em>y &nbsp; ẏ=<em>d</em>x+(z−<em>b</em>)y &nbsp; ż=<em>c</em>+<em>a</em>z−z³/3−(x²+y²)(1+<em>e</em>z)+<em>f</em>zx³',
+      formula:
+        _.eq(_.lbl('aizawa attractor · 軸')) +
+        _.eq(_.v('ẋ'), _.op('='), '(', _.v('z'), '−', _.v('b'), ')', _.v('x'), ' − ', _.v('d'), _.v('y')) +
+        _.eq(_.v('ẏ'), _.op('='), _.v('d'), _.v('x'), ' + (', _.v('z'), '−', _.v('b'), ')', _.v('y')) +
+        _.eq(
+          _.v('ż'), _.op('='), _.v('c'), ' + ', _.v('a'), _.v('z'), ' − ',
+          _.frac(_.pow(_.v('z'), '3'), _.num('3')),
+          ' − (', _.pow(_.v('x'), '2'), '+', _.pow(_.v('y'), '2'), ')(1+', _.v('e'), _.v('z'), ') + ',
+          _.v('f'), _.v('z'), _.pow(_.v('x'), '3')
+        ),
       params: [
         {key:'a',     sym:'a', label:'a',          ja:'甲', min:0.1,  max:1.5,  step:0.001, value:0.95,  fmt:v=>v.toFixed(3)},
         {key:'b',     sym:'b', label:'b',          ja:'乙', min:0.1,  max:1.5,  step:0.001, value:0.7,   fmt:v=>v.toFixed(3)},
@@ -1263,7 +1356,16 @@
     VIZ.push({
       id: 'chladni', ja: '波', short: 'V12',
       subtitle: 'chladni · nº 12', index: '波 · standing waves · float modes',
-      formula: '<em>z</em>(x,y) = sin(<em>n</em>πx)sin(<em>m</em>πy) + sin(<em>m</em>πx)sin(<em>n</em>πy)',
+      formula:
+        _.eq(_.lbl('chladni figures · 波')) +
+        _.eq(
+          _.v('z'), '(', _.v('x'), ',', _.v('y'), ')', _.op('='),
+          'sin(', _.v('n'), _.g('π'), _.v('x'), ')sin(', _.v('m'), _.g('π'), _.v('y'), ')'
+        ) +
+        _.eq(
+          _.op('+'),
+          'sin(', _.v('m'), _.g('π'), _.v('x'), ')sin(', _.v('n'), _.g('π'), _.v('y'), ')'
+        ),
       params: [
         {key:'n',      sym:'n', label:'n mode',  ja:'一', min:1,    max:8,   step:0.01,  value:3,    fmt:v=>v.toFixed(2)},
         {key:'m',      sym:'m', label:'m mode',  ja:'二', min:1,    max:8,   step:0.01,  value:5,    fmt:v=>v.toFixed(2)},
@@ -1305,7 +1407,15 @@
     VIZ.push({
       id: 'curl', ja: '流', short: 'V13',
       subtitle: 'curl noise · nº 13', index: '流 · ink in water · curl field',
-      formula: '<em>v</em> = (∂<em>n</em>/∂y, −∂<em>n</em>/∂x) &nbsp;·&nbsp; <em>n</em> = noise(x, y, t)',
+      formula:
+        _.eq(_.lbl('curl noise · 流')) +
+        _.eq(
+          _.v('v'), _.op('='), '(',
+          _.frac('∂' + _.v('n'), '∂' + _.v('y')), _.op(','),
+          '−', _.frac('∂' + _.v('n'), '∂' + _.v('x')),
+          ')'
+        ) +
+        _.eq(_.v('n'), _.op('='), 'noise(', _.v('x'), ',', _.v('y'), ',', _.v('t'), ')'),
       params: [
         {key:'particles', sym:'N', label:'particles', ja:'粒', min:500,   max:15000, step:100,    value:4500,  fmt:v=>v.toFixed(0)},
         {key:'freq',      sym:'f', label:'freq',      ja:'周', min:0.001, max:0.02,  step:0.0001, value:0.004, fmt:v=>v.toFixed(4)},
@@ -1353,7 +1463,20 @@
     VIZ.push({
       id: 'rd', ja: '化', short: 'V14',
       subtitle: 'gray-scott · nº 14', index: '化 · reaction-diffusion · spots & stripes',
-      formula: '∂u/∂t = <em>Dᵤ</em>∇²u − uv² + <em>F</em>(1−u) &nbsp;·&nbsp; ∂v/∂t = <em>Dᵥ</em>∇²v + uv² − (<em>F</em>+<em>K</em>)v',
+      formula:
+        _.eq(_.lbl('gray-scott · 化')) +
+        _.eq(
+          _.frac('∂' + _.v('u'), '∂' + _.v('t')), _.op('='),
+          _.sub(_.v('D'), _.v('u')), '∇', _.pow('', '2'), _.v('u'),
+          ' − ', _.v('uv'), _.pow('', '2'),
+          ' + ', _.v('F'), '(1−', _.v('u'), ')'
+        ) +
+        _.eq(
+          _.frac('∂' + _.v('v'), '∂' + _.v('t')), _.op('='),
+          _.sub(_.v('D'), _.v('v')), '∇', _.pow('', '2'), _.v('v'),
+          ' + ', _.v('uv'), _.pow('', '2'),
+          ' − (', _.v('F'), '+', _.v('K'), ')', _.v('v')
+        ),
       params: [
         {key:'F',      sym:'F',  label:'feed',       ja:'食',  min:0.01,   max:0.1,    step:0.0001,  value:0.042,  fmt:v=>v.toFixed(4)},
         {key:'K',      sym:'K',  label:'kill',       ja:'殺',  min:0.04,   max:0.08,   step:0.0001,  value:0.061,  fmt:v=>v.toFixed(4)},
