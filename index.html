@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>渦巻 · Uzumaki</title>
-<link rel="manifest" href="./manifest.webmanifest?v=45a363a2">
+<link rel="manifest" href="./manifest.webmanifest?v=9a3da241">
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Uzumaki">
-<link rel="apple-touch-icon" href="./icon.svg?v=45a363a2">
+<link rel="apple-touch-icon" href="./icon.svg?v=9a3da241">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     z-index: 50;
     opacity: 0.06;
     mix-blend-mode: overlay;
-    background-image: url("./noise.svg?v=45a363a2");
+    background-image: url("./noise.svg?v=9a3da241");
   }
 
   body::after {
@@ -617,89 +617,104 @@
   }
   .g-stat .lbl { color: var(--bone-faint); }
   .g-stat .v   { color: var(--bone); font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
-  /* Per-key gauges with entropy wiggle */
-  .g-gauges {
-    display: flex;
-    gap: 0.55rem;
-    margin-top: 0.5rem;
+  /* WASD cross keypad — left side, only visible in game mode */
+  .game-keypad {
+    position: fixed;
+    top: 50%;
+    left: 2rem;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: none;
+    grid-template-columns: 50px 22px 50px;
+    grid-template-rows: 50px 22px 50px;
+    gap: 0.3rem;
+    user-select: none;
+    pointer-events: none;
   }
-  .g-gauge {
-    flex: 1;
+  body.mode-game .game-keypad { display: grid; }
+  .kp-cell[data-k="w"] { grid-column: 2; grid-row: 1; }
+  .kp-cell[data-k="a"] { grid-column: 1; grid-row: 2; }
+  .kp-cell[data-k="d"] { grid-column: 3; grid-row: 2; }
+  .kp-cell[data-k="s"] { grid-column: 2; grid-row: 3; }
+
+  .kp-cell {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.55rem 0.45rem 0.5rem;
+    justify-content: center;
     border: 1px solid var(--bone-faint);
     background: rgba(245, 240, 230, 0.02);
     transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
   }
-  .g-gauge.active {
-    background: rgba(193, 39, 45, 0.14);
+  .kp-vert {
+    flex-direction: column;
+    width: 22px;
+    height: 50px;
+    padding: 2px 0 3px;
+    gap: 2px;
+  }
+  .kp-horiz {
+    flex-direction: row;
+    width: 50px;
+    height: 22px;
+    padding: 0 3px;
+    gap: 3px;
+  }
+  .kp-cell.active {
     border-color: var(--cinnabar);
-    box-shadow: 0 0 12px rgba(193, 39, 45, 0.4);
+    background: rgba(193, 39, 45, 0.14);
+    box-shadow: 0 0 10px rgba(193, 39, 45, 0.35);
   }
-  .g-gauge-key kbd {
+  .kp-cell kbd {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.5rem;
     font-weight: 500;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     background: transparent;
     border: 0;
     color: var(--bone-dim);
     padding: 0;
+    line-height: 1;
   }
-  .g-gauge.active .g-gauge-key kbd { color: var(--bone); }
-  .g-gauge-bar {
+  .kp-cell.active kbd { color: var(--bone); }
+
+  .kp-bar {
     position: relative;
-    width: 2px;
-    height: 64px;
     background: var(--bone-trace);
-    margin: 0.2rem 0;
+    flex: 1;
   }
-  .g-gauge-target {
+  .kp-vert .kp-bar { width: 2px; }
+  .kp-horiz .kp-bar { height: 2px; }
+
+  .kp-target {
     position: absolute;
-    left: -5px;
-    right: -5px;
-    height: 1px;
     background: var(--gold);
-    box-shadow: 0 0 5px rgba(176, 141, 87, 0.85);
-    transform: translateY(-0.5px);
+    box-shadow: 0 0 4px rgba(176, 141, 87, 0.85);
     pointer-events: none;
   }
-  .g-gauge-dot {
+  .kp-vert .kp-target {
+    left: -4px;
+    right: -4px;
+    height: 1px;
+  }
+  .kp-horiz .kp-target {
+    top: -4px;
+    bottom: -4px;
+    width: 1px;
+  }
+
+  .kp-dot {
     position: absolute;
-    left: 50%;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: var(--bone);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     will-change: transform, background, box-shadow;
     pointer-events: none;
   }
-  .g-gauge-foot {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.1rem;
-    line-height: 1;
-  }
-  .g-gauge-param {
-    font-family: 'STIX Two Text', serif;
-    font-style: italic;
-    color: var(--gold);
-    font-size: 0.9rem;
-  }
-  .g-gauge.active .g-gauge-param { color: var(--cinnabar); }
-  .g-gauge-val {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.52rem;
-    color: var(--bone-dim);
-    letter-spacing: 0.04em;
-    font-variant-numeric: tabular-nums;
-    min-height: 0.7rem;
-  }
+  .kp-vert .kp-dot  { left: 50%; }
+  .kp-horiz .kp-dot { top: 50%; }
 
   /* Win overlay */
   .game-win {
@@ -766,8 +781,7 @@
       padding: 0.7rem 0.9rem 0.85rem;
     }
     .g-stats { gap: 0.7rem; }
-    .g-gauge { padding: 0.4rem 0.3rem 0.45rem; gap: 0.35rem; }
-    .g-gauge-bar { height: 56px; }
+    .game-keypad { left: 0.8rem; }
   }
 
   button {
@@ -1188,9 +1202,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="45a363a2">
-  <link rel="icon" type="image/svg+xml" href="./cb-shapes/05.svg?v=45a363a2">
-  <script src="./cb-badge.js?v=45a363a2" defer></script>
+  <meta name="cb" content="9a3da241">
+  <link rel="icon" type="image/svg+xml" href="./cb-shapes/26.svg?v=9a3da241">
+  <script src="./cb-badge.js?v=9a3da241" defer></script>
 </head>
 <body>
   <canvas id="canvas"></canvas>
@@ -1279,51 +1293,37 @@
       <div class="g-stat"><span class="lbl">hold</span><span class="v" id="game-hold">0.0s</span></div>
       <div class="g-stat"><span class="lbl">best</span><span class="v" id="game-best">—</span></div>
     </div>
-    <div class="g-gauges">
-      <div class="g-gauge" data-k="w" data-param="a">
-        <div class="g-gauge-key"><kbd>W</kbd></div>
-        <div class="g-gauge-bar">
-          <div class="g-gauge-target"></div>
-          <div class="g-gauge-dot"></div>
-        </div>
-        <div class="g-gauge-foot">
-          <span class="g-gauge-param"><i>a</i></span>
-          <span class="g-gauge-val">—</span>
-        </div>
+  </div>
+
+  <!-- WASD cross keypad (left side, only in game mode) -->
+  <div class="game-keypad" id="game-keypad" aria-hidden="true">
+    <div class="kp-cell kp-vert" data-k="w" data-param="a">
+      <kbd>W</kbd>
+      <div class="kp-bar">
+        <div class="kp-target"></div>
+        <div class="kp-dot"></div>
       </div>
-      <div class="g-gauge" data-k="a" data-param="b">
-        <div class="g-gauge-key"><kbd>A</kbd></div>
-        <div class="g-gauge-bar">
-          <div class="g-gauge-target"></div>
-          <div class="g-gauge-dot"></div>
-        </div>
-        <div class="g-gauge-foot">
-          <span class="g-gauge-param"><i>b</i></span>
-          <span class="g-gauge-val">—</span>
-        </div>
+    </div>
+    <div class="kp-cell kp-horiz" data-k="a" data-param="b">
+      <kbd>A</kbd>
+      <div class="kp-bar">
+        <div class="kp-target"></div>
+        <div class="kp-dot"></div>
       </div>
-      <div class="g-gauge" data-k="s" data-param="c">
-        <div class="g-gauge-key"><kbd>S</kbd></div>
-        <div class="g-gauge-bar">
-          <div class="g-gauge-target"></div>
-          <div class="g-gauge-dot"></div>
-        </div>
-        <div class="g-gauge-foot">
-          <span class="g-gauge-param"><i>c</i></span>
-          <span class="g-gauge-val">—</span>
-        </div>
+    </div>
+    <div class="kp-cell kp-horiz kp-right" data-k="d" data-param="d">
+      <div class="kp-bar">
+        <div class="kp-target"></div>
+        <div class="kp-dot"></div>
       </div>
-      <div class="g-gauge" data-k="d" data-param="d">
-        <div class="g-gauge-key"><kbd>D</kbd></div>
-        <div class="g-gauge-bar">
-          <div class="g-gauge-target"></div>
-          <div class="g-gauge-dot"></div>
-        </div>
-        <div class="g-gauge-foot">
-          <span class="g-gauge-param"><i>d</i></span>
-          <span class="g-gauge-val">—</span>
-        </div>
+      <kbd>D</kbd>
+    </div>
+    <div class="kp-cell kp-vert kp-bottom" data-k="s" data-param="c">
+      <div class="kp-bar">
+        <div class="kp-target"></div>
+        <div class="kp-dot"></div>
       </div>
+      <kbd>S</kbd>
     </div>
   </div>
 
@@ -2487,10 +2487,12 @@
         bestEl.textContent = isFinite(best) ? best.toFixed(1) + 's' : '—';
       }
 
-      // Per-gauge updates: position, entropy wiggle, color, target tick
+      // Per-key cross-keypad updates. W & S are vertical bars; A & D
+      // are horizontal bars. Entropy is toned down — wiggle amp dist*2,
+      // glow softer.
       for (const key of ['w','a','s','d']) {
-        const gauge = document.querySelector(`.g-gauge[data-k="${key}"]`);
-        if (!gauge) continue;
+        const cell = document.querySelector(`.kp-cell[data-k="${key}"]`);
+        if (!cell) continue;
         const param = GAME_KEY2PARAM[key];
         const value = s.gp[param];
         const target = GAME_TARGET[param];
@@ -2501,34 +2503,39 @@
         // dist ∈ [0, 1]: 0 = at target, 1 = max distance (saturated)
         const dist = Math.min(1, Math.abs(value - target) / range * 2);
 
-        gauge.classList.toggle('active', !!s.keys[key]);
+        cell.classList.toggle('active', !!s.keys[key]);
 
-        const dot = gauge.querySelector('.g-gauge-dot');
-        const tgt = gauge.querySelector('.g-gauge-target');
-        const val = gauge.querySelector('.g-gauge-val');
+        const dot = cell.querySelector('.kp-dot');
+        const tgt = cell.querySelector('.kp-target');
+        if (!dot) continue;
 
-        if (dot) {
-          // Vertical: 0% = top = max value, 100% = bottom = min value
-          const topPercent = (1 - valFrac) * 100;
-          // Entropy wiggle (decorative): amplitude scales with dist from target.
-          // Random per-frame jitter — at 60fps looks like vibration.
-          const amp = dist * 5;
-          const wx = (Math.random() - 0.5) * 2 * amp;
-          const wy = (Math.random() - 0.5) * 2 * amp;
-          dot.style.top = topPercent + '%';
+        const vert = cell.classList.contains('kp-vert');
+        // Tone down: amp = dist * 2 (was *5)
+        const amp = dist * 2;
+        const wx = (Math.random() - 0.5) * 2 * amp;
+        const wy = (Math.random() - 0.5) * 2 * amp;
+
+        if (vert) {
+          dot.style.top = (1 - valFrac) * 100 + '%';   // top of bar = max value
+          if (tgt) tgt.style.top = (1 - tgtFrac) * 100 + '%';
           dot.style.transform = `translate(calc(-50% + ${wx}px), calc(-50% + ${wy}px))`;
-          // Color: bone (calm) → cinnabar (chaos) via 2-color lerp
-          const cr = (245 + (193 - 245) * dist) | 0;
-          const cg = (240 + ( 39 - 240) * dist) | 0;
-          const cb = (230 + ( 45 - 230) * dist) | 0;
-          dot.style.background = `rgb(${cr},${cg},${cb})`;
-          const glow = dist * 14;
-          dot.style.boxShadow = glow > 1
-            ? `0 0 ${glow.toFixed(1)}px rgba(193, 39, 45, ${(dist * 0.75).toFixed(2)})`
-            : 'none';
+        } else {
+          dot.style.left = valFrac * 100 + '%';        // right of bar = max value
+          if (tgt) tgt.style.left = tgtFrac * 100 + '%';
+          dot.style.transform = `translate(calc(-50% + ${wx}px), calc(-50% + ${wy}px))`;
         }
-        if (tgt) tgt.style.top = (1 - tgtFrac) * 100 + '%';
-        if (val) val.textContent = value.toFixed(3);
+
+        // Color: bone → cinnabar (capped softly to avoid full saturation)
+        const cdist = Math.min(0.85, dist);
+        const cr = (245 + (193 - 245) * cdist) | 0;
+        const cg = (240 + ( 39 - 240) * cdist) | 0;
+        const cb = (230 + ( 45 - 230) * cdist) | 0;
+        dot.style.background = `rgb(${cr},${cg},${cb})`;
+        // Softer glow (was 14, now 7)
+        const glow = dist * 7;
+        dot.style.boxShadow = glow > 1
+          ? `0 0 ${glow.toFixed(1)}px rgba(193, 39, 45, ${(dist * 0.55).toFixed(2)})`
+          : 'none';
       }
     }
 
